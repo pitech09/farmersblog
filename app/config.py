@@ -32,8 +32,11 @@ class BaseConfig:
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
     
-    # Cloudinary settings (disabled by default)
-    CLOUDINARY_ENABLED = False
+    # Cloudinary settings (disabled by default, enable via env var)
+    CLOUDINARY_ENABLED = os.getenv('CLOUDINARY_ENABLED', 'false').lower() == 'true'
+    CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
+    CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
+    CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
     
     # Media URL helper
     @property
@@ -59,9 +62,6 @@ class DevConfig(BaseConfig):
     # Rate limiting with in-memory storage
     RATELIMIT_STORAGE_URI = os.getenv('RATELIMIT_STORAGE_URI', 'memory://')
     
-    # Cloudinary disabled in development
-    CLOUDINARY_ENABLED = False
-    
     # Session cookies (no HTTPS requirement in dev)
     SESSION_COOKIE_SECURE = False
     
@@ -80,11 +80,8 @@ class ProdConfig(BaseConfig):
     # PostgreSQL database
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', '')
     
-    # Cloudinary enabled in production
+    # Cloudinary enabled in production (overrides BaseConfig default)
     CLOUDINARY_ENABLED = True
-    CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', '')
-    CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', '')
-    CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
     
     # Redis for caching and rate limiting
     REDIS_URL = os.getenv('REDIS_URL', '')
