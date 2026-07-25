@@ -24,8 +24,6 @@ sample_users = [
 def seed():
     with app.app_context():
         # Clear existing data
-        db.drop_all()
-        db.create_all()
 
         print('Creating sample users...')
         users = []

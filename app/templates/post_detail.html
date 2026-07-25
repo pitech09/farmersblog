@@ -77,7 +77,7 @@
         {% endif %}
 
         <div class="card-body px-4">
-            <p class="card-text fs-5">{{ post.caption }}</p>
+            <p class="card-text fs-5">{{ post.caption|replace('\n', '<br>')|safe }}</p>
             <div class="d-flex align-items-center gap-3 mt-3 pb-3 border-bottom">
                 <!-- Like Button -->
                 {% if current_user.is_authenticated %}
@@ -131,7 +131,7 @@
                         </div>
                         <div class="bg-light rounded-4 px-3 py-2 flex-grow-1">
                             <strong class="d-block small">{{ comment.author.username }}</strong>
-                            <p class="mb-0">{{ comment.text }}</p>
+                            <p class="mb-0">{{ comment.text|replace('\n', '<br>')|safe }}</p>
                             <small class="text-muted">{{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
                         </div>
                     </div>

@@ -235,3 +235,16 @@ body {
 .read-more-link:hover {
     text-decoration: underline !important;
 }
+
+/* Preserve whitespace and line breaks in user-generated text */
+.post-caption,
+.caption-preview,
+.caption-full,
+.comment-item p,
+.chat-messages p,
+.bio-text,
+.group-description,
+.listing-description {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}

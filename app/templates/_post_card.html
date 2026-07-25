@@ -25,12 +25,12 @@
         </div>
         {% if post.has_long_caption %}
         <p class="post-caption mb-2">
-            <span class="caption-preview">{{ post.caption_preview }}</span>
-            <span class="caption-full d-none">{{ post.caption }}</span>
+            <span class="caption-preview">{{ post.caption_preview|replace('\n', '<br>')|safe }}</span>
+            <span class="caption-full d-none">{{ post.caption|replace('\n', '<br>')|safe }}</span>
             <a href="javascript:void(0)" class="read-more-link" onclick="toggleReadMore(this)">Show more</a>
         </p>
         {% else %}
-        <p class="post-caption mb-2">{{ post.caption }}</p>
+        <p class="post-caption mb-2">{{ post.caption|replace('\n', '<br>')|safe }}</p>
         {% endif %}
         {% set first_media = post.first_media %}
         {% if first_media %}

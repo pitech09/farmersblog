@@ -14,7 +14,7 @@
                 <div class="flex-grow-1">
                     <h4 class="fw-bold mb-1">{{ group.name }}</h4>
                     {% if group.description %}
-                    <p class="text-muted mb-2">{{ group.description }}</p>
+                    <p class="text-muted mb-2">{{ group.description|replace('\n', '<br>')|safe }}</p>
                     {% endif %}
                     <div class="d-flex align-items-center gap-3 small text-muted">
                         <span><i class="bi bi-people me-1"></i><strong id="memberCount">{{ group.member_count }}</strong> members</span>

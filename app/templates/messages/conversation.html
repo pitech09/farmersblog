@@ -30,7 +30,7 @@
                 <div class="d-flex mb-3 {% if msg.sender_id == current_user.id %}justify-content-end{% endif %}">
                     <div class="{% if msg.sender_id == current_user.id %}bg-primary text-white{% else %}bg-light{% endif %} rounded-4 px-3 py-2"
                          style="max-width: 75%;">
-                        <p class="mb-0">{{ msg.body }}</p>
+                        <p class="mb-0">{{ msg.body|replace('\n', '<br>')|safe }}</p>
                         <small class="{% if msg.sender_id == current_user.id %}text-white-50{% else %}text-muted{% endif %} d-block text-end mt-1"
                                style="font-size: 0.7rem;">
                             {{ msg.timestamp.strftime('%I:%M %p') }}
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.className = 'd-flex mb-3 ' + (isSent ? 'justify-content-end' : '');
         div.innerHTML = '<div class="' + (isSent ? 'bg-primary text-white' : 'bg-light') + ' rounded-4 px-3 py-2" style="max-width: 75%;">' +
-            '<p class="mb-0">' + body + '</p>' +
+            '<p class="mb-0">' + body.replace(/\n/g, '<br>') + '</p>' +
             '<small class="' + (isSent ? 'text-white-50' : 'text-muted') + ' d-block text-end mt-1" style="font-size: 0.7rem;">' + timestamp + '</small>' +
             '</div>';
         chat.appendChild(div);

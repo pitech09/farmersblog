@@ -32,7 +32,7 @@
             </div>
             <div class="flex-grow-1 min-w-0">
                 <a href="{{ notification.link }}" class="text-decoration-none text-dark">
-                    <p class="mb-1">{{ notification.message }}</p>
+                    <p class="mb-1">{{ notification.message|replace('\n', '<br>')|safe }}</p>
                     <small class="text-muted">{{ notification.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
                 </a>
             </div>
