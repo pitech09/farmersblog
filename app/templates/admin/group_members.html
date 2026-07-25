@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Members of {{ group.name }} - Admin - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <i class="bi bi-shield-lock" style="font-size: 2rem; color: #1877F2;"></i>
+        <div>
+            <h4 class="fw-bold mb-0">Members of <a href="{{ url_for('groups.detail', group_name=group.name) }}" class="text-decoration-none">{{ group.name }}</a></h4>
+            <small class="text-muted">{{ members|length }} member{% if members|length != 1 %}s{% endif %}</small>
+        </div>
+    </div>
+
+    <a href="{{ url_for('admin.groups') }}" class="btn btn-outline-secondary rounded-pill mb-4">
+        <i class="bi bi-arrow-left me-1"></i>Back to Groups
+    </a>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>Username</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td class="ps-4">{{ loop.index }}</td>
+                        <td>
+                            <a href="{{ url_for('profile.public_profile', username=member.username) }}" class="text-decoration-none fw-semibold">
+                                {{ member.username }}
+                            </a>
+                        </td>
+                        <td class="text-muted small">
+                            {% set membership = group.members.filter(group_members.c.user_id == member.id).first() %}
+                            {% if membership %}
+                                {{ membership.joined_at.strftime('%b %d, %Y') if membership.joined_at else '—' }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center py-5 text-muted">
+                            <i class="bi bi-people fs-1 d-block mb-2"></i>
+                            No members in this group.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

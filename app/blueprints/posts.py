@@ -225,3 +225,59 @@ def comment(post_id):
         'author': comment.author.username,
         'created_at': comment.created_at.strftime('%b %d, %Y at %I:%M %p')
     })
+
+
+@posts_bp.route('/<int:post_id>/edit', methods=['GET', 'POST'])
+@login_required
+@limiter.limit("10 per minute")
+def edit(post_id):
+    post = Post.query.get_or_404(post_id)
+    
+    # Only the post author can edit
+    if post.author_id != current_user.id:
+        abort(403)
+    
+    groups = Group.query.filter(Group.members.any(id=current_user.id)).all()
+    
+    form = PostForm()
+    form.group_id.choices = [('', '— Public Feed —')] + [(g.id, g.name) for g in groups]
+    
+    if form.validate_on_submit():
+        caption = form.caption.data.strip() if form.caption.data else ''
+        from bleach import clean
+        post.caption = clean(caption, tags=[], strip=True)[:5000]
+        
+        group_id = form.group_id.data or None
+        if group_id:
+            group = Group.query.get_or_404(group_id)
+            if not group.has_member(current_user):
+                flash('You are not a member of this group.', 'danger')
+                return redirect(url_for('main.index'))
+        post.group_id = group_id if group_id else None
+        
+        db.session.commit()
+        flash('Post updated successfully!', 'success')
+        return redirect(url_for('main.post_detail', post_id=post.id))
+    
+    # Pre-fill form with existing data on GET
+    if request.method == 'GET':
+        form.caption.data = post.caption
+        form.group_id.data = post.group_id
+    
+    return render_template('posts/edit.html', form=form, groups=groups, post=post)
+
+
+@posts_bp.route('/<int:post_id>/delete', methods=['POST'])
+@login_required
+@limiter.limit("10 per minute")
+def delete(post_id):
+    post = Post.query.get_or_404(post_id)
+    
+    # Only the post author can delete
+    if post.author_id != current_user.id:
+        return jsonify({'error': 'You can only delete your own posts.'}), 403
+    
+    db.session.delete(post)
+    db.session.commit()
+    
+    return jsonify({'success': True}) and redirect(url_for('main.index'))

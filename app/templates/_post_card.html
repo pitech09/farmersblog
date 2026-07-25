@@ -76,6 +76,14 @@
             <button class="action-btn" onclick="sharePost({{ post.id }})">
                 <span class="action-icon"><i class="bi bi-share"></i></span>
             </button>
+            {% if current_user.is_authenticated and post.author_id == current_user.id %}
+            <a href="{{ url_for('posts.edit', post_id=post.id) }}" class="action-btn text-primary">
+                <span class="action-icon"><i class="bi bi-pencil"></i></span>
+            </a>
+            <button class="action-btn text-danger" onclick="deletePost({{ post.id }})">
+                <span class="action-icon"><i class="bi bi-trash"></i></span>
+            </button>
+            {% endif %}
         </div>
     </div>
 </div>

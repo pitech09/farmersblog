@@ -103,6 +103,18 @@
                     <i class="bi bi-share fs-5"></i>
                     <span class="fw-semibold">Share</span>
                 </button>
+
+                {% if current_user.is_authenticated and post.author_id == current_user.id %}
+                <a href="{{ url_for('posts.edit', post_id=post.id) }}" class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-2 px-3 py-2 ms-auto">
+                    <i class="bi bi-pencil fs-5"></i>
+                    <span class="fw-semibold">Edit</span>
+                </a>
+                <button class="btn btn-outline-danger rounded-pill d-flex align-items-center gap-2 px-3 py-2"
+                        onclick="deletePost({{ post.id }})">
+                    <i class="bi bi-trash fs-5"></i>
+                    <span class="fw-semibold">Delete</span>
+                </button>
+                {% endif %}
             </div>
 
             <!-- Comments Section -->

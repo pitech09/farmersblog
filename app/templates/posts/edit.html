@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Edit Post - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <div class="card shadow-sm rounded-4 border-0">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-pencil-square" style="font-size: 2rem; color: #1877F2;"></i>
+                <h3 class="fw-bold mt-2">Edit Post</h3>
+                <p class="text-muted">Update your post caption</p>
+            </div>
+            <form method="POST" action="{{ url_for('posts.edit', post_id=post.id) }}">
+                {{ form.csrf_token }}
+                <div class="mb-4">
+                    <label for="caption" class="form-label fw-semibold">Caption</label>
+                    {{ form.caption(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="Write something about your photos...", required=true) }}
+                </div>
+                {% if groups %}
+                <div class="mb-4">
+                    <label for="group_id" class="form-label fw-semibold">Post to a Group (optional)</label>
+                    {{ form.group_id(class="form-select bg-light border-0 rounded-4 p-3") }}
+                </div>
+                {% endif %}
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.post_detail', post_id=post.id) }}" class="btn btn-outline-secondary rounded-pill py-2 fw-semibold flex-fill">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary rounded-pill py-2 fw-semibold flex-fill">
+                        <i class="bi bi-check-circle me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

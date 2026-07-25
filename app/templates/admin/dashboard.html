@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <i class="bi bi-shield-lock" style="font-size: 2rem; color: #1877F2;"></i>
+        <div>
+            <h4 class="fw-bold mb-0">Admin Dashboard</h4>
+            <small class="text-muted">Site overview and management</small>
+        </div>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2 flex-wrap">
+        <li class="nav-item">
+            <a class="nav-link active rounded-pill" href="{{ url_for('admin.dashboard') }}">
+                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill" href="{{ url_for('admin.users') }}">
+                <i class="bi bi-people me-1"></i>Users
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill" href="{{ url_for('admin.posts') }}">
+                <i class="bi bi-file-text me-1"></i>Posts
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill" href="{{ url_for('admin.listings') }}">
+                <i class="bi bi-shop me-1"></i>Listings
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill" href="{{ url_for('admin.groups') }}">
+                <i class="bi bi-people-fill me-1"></i>Groups
+            </a>
+        </li>
+    </ul>
+
+    <!-- Stats Grid -->
+    <div class="row g-3">
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <i class="bi bi-people fs-2 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ stats.total_users }}</h3>
+                <small class="text-muted">Total Users</small>
+                <span class="badge bg-light text-success mt-1">+{{ stats.new_users_7d }} in 7 days</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <i class="bi bi-file-text fs-2 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ stats.total_posts }}</h3>
+                <small class="text-muted">Total Posts</small>
+                <span class="badge bg-light text-success mt-1">+{{ stats.new_posts_24h }} in 24h</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <i class="bi bi-chat-dots fs-2 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ stats.total_comments }}</h3>
+                <small class="text-muted">Total Comments</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <i class="bi bi-envelope fs-2 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ stats.total_messages }}</h3>
+                <small class="text-muted">Total Messages</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <i class="bi bi-shop fs-2 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ stats.total_listings }}</h3>
+                <small class="text-muted">Total Listings</small>
+                <span class="badge bg-light text-success mt-1">{{ stats.active_listings }} active</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <i class="bi bi-check-circle fs-2 text-success"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ stats.sold_listings }}</h3>
+                <small class="text-muted">Sold Listings</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <i class="bi bi-people-fill fs-2 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ stats.total_groups }}</h3>
+                <small class="text-muted">Total Groups</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

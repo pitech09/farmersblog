@@ -70,6 +70,7 @@ def create_app(config_class=None):
     from app.blueprints.groups import groups_bp
     from app.blueprints.marketplace import marketplace_bp
     from app.blueprints.notifications import notifications_bp
+    from app.blueprints.admin import admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -79,6 +80,7 @@ def create_app(config_class=None):
     app.register_blueprint(groups_bp, url_prefix='/groups')
     app.register_blueprint(marketplace_bp, url_prefix='/marketplace')
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(admin_bp)
 
     # Context processor for unread messages, notifications count, and recent notifications
     @app.context_processor

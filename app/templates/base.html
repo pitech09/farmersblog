@@ -15,7 +15,7 @@
     <nav class="top-nav">
         <div class="container d-flex align-items-center justify-content-between" style="max-width: 680px;">
             <a class="top-nav-brand fw-bold" href="{{ url_for('main.index') }}">
-                <i class="bi bi-flower1 me-2" style="color: #1877F2;"></i>farmersblog
+                <i class="bi bi-flower1 me-2" style="color: #1877F2;"></i>Farmersblog
             </a>
             <div class="d-flex align-items-center gap-2">
                 {% if current_user.is_authenticated %}
@@ -61,6 +61,11 @@
                         <li><a class="dropdown-item text-center small py-2 fw-semibold" href="{{ url_for('notifications.index') }}">See all</a></li>
                     </ul>
                 </div>
+                {% if current_user.is_admin %}
+                <a class="top-nav-icon" href="{{ url_for('admin.dashboard') }}" title="Admin Panel">
+                    <i class="bi bi-shield-lock"></i>
+                </a>
+                {% endif %}
                 <!-- Settings gear -->
                 <a class="top-nav-icon" href="{{ url_for('profile.settings') }}" title="Settings">
                     <i class="bi bi-gear"></i>

@@ -294,3 +294,41 @@ function showShareToast() {
         toast.show();
     }
 }
+
+// Delete post (AJAX) - owner only
+function deletePost(postId) {
+    if (!confirm('Are you sure you want to delete this post?')) {
+        return;
+    }
+
+    fetch('/posts/' + postId + '/delete', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(function (response) {
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
+        return response.json();
+    })
+    .then(function (data) {
+        if (!data) return;
+        if (data.error) {
+            console.error(data.error);
+            alert(data.error);
+            return;
+        }
+        if (data.success) {
+            // Redirect to home page after successful deletion
+            window.location.href = '/';
+        }
+    })
+    .catch(function (error) {
+        console.error('Error deleting post:', error);
+        window.location.reload();
+    });
+}
