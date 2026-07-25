@@ -1,7 +1,14 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, IntegerField, SelectField, FileField, PasswordField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, Optional
+from wtforms import StringField, TextAreaField, IntegerField, FloatField, SelectField, FileField, PasswordField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, Optional, NumberRange
 from app.models import User, Group
+
+
+def coerce_optional_int(value):
+    """Coerce a value to int, returning None for empty strings."""
+    if value == '' or value is None:
+        return None
+    return int(value)
 
 
 class LoginForm(FlaskForm):
@@ -41,7 +48,7 @@ class PostForm(FlaskForm):
         Length(max=500, message='Caption must be under 500 characters.')
     ])
     media = FileField('Media', validators=[Optional()])
-    group_id = SelectField('Post to Group', coerce=int, validators=[Optional()])
+    group_id = SelectField('Post to Group', coerce=coerce_optional_int, validators=[Optional()])
 
     def __init__(self, *args, **kwargs):
         super(PostForm, self).__init__(*args, **kwargs)
@@ -91,7 +98,7 @@ class ListingForm(FlaskForm):
         Length(min=3, max=200),
     ])
     description = TextAreaField('Description', validators=[DataRequired()])
-    price = IntegerField('Price ($)', validators=[DataRequired()])
+    price = FloatField('Price (M)', validators=[DataRequired(), NumberRange(min=0)])
     category = SelectField('Category', validators=[DataRequired()])
     location = StringField('Location', validators=[Optional(), Length(max=100)])
     image = FileField('Image', validators=[DataRequired()])

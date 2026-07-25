@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 import magic
 from app.forms import PostForm
 from app.extensions import db, limiter
-from app.models import Post, Media, Comment, Group, User
+from app.models import Post, Media, Comment, Group, User, Notification
 from app.helpers import get_media_url, upload_to_cloudinary
 
 posts_bp = Blueprint('posts', __name__)
@@ -34,6 +34,9 @@ def validate_mime_type(file_path, expected_type):
     try:
         mime = magic.Magic(mime=True)
         file_mime = mime.from_file(file_path)
+        # from_file returns bytes (e.g. b'image/jpeg'), decode to str for comparison
+        if isinstance(file_mime, bytes):
+            file_mime = file_mime.decode('utf-8')
         
         if expected_type == 'image':
             return file_mime in ['image/jpeg', 'image/png', 'image/gif', 'image/jpg']
@@ -127,8 +130,8 @@ def create():
                     os.remove(full_path)
                     flash(f'Invalid file content: {file.filename}', 'danger')
                     db.session.rollback()
-                    return render_template('posts/create.html', groups=groups)
-                
+                    return render_template('posts/create.html', form=form, groups=groups)
+
                 # Store relative path for dev
                 stored_filename = f"posts/{unique_name}"
 
@@ -147,7 +150,7 @@ def create():
             return redirect(url_for('groups.detail', group_name=group.name))
         return redirect(url_for('main.index'))
 
-    return render_template('posts/create.html', groups=groups)
+    return render_template('posts/create.html', groups=groups, form=form, preselected_group=preselected_group)
 
 
 @posts_bp.route('/<int:post_id>/like', methods=['POST'])
@@ -164,6 +167,17 @@ def like(post_id):
         post.likes.append(current_user)
         db.session.commit()
         liked = True
+        # Notify the post owner if not the liker
+        if post.author_id != current_user.id:
+            notification = Notification(
+                recipient_id=post.author_id,
+                actor_id=current_user.id,
+                type='like',
+                message=f'{current_user.username} liked your post',
+                link=url_for('main.post_detail', post_id=post.id)
+            )
+            db.session.add(notification)
+            db.session.commit()
 
     return jsonify({
         'liked': liked,
@@ -192,6 +206,18 @@ def comment(post_id):
     )
     db.session.add(comment)
     db.session.commit()
+
+    # Notify the post owner if not the commenter
+    if post.author_id != current_user.id:
+        notification = Notification(
+            recipient_id=post.author_id,
+            actor_id=current_user.id,
+            type='comment',
+            message=f'{current_user.username} commented on your post',
+            link=url_for('main.post_detail', post_id=post.id)
+        )
+        db.session.add(notification)
+        db.session.commit()
 
     return jsonify({
         'id': comment.id,

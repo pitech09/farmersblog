@@ -23,6 +23,9 @@ def validate_image_mime(file_path):
     try:
         mime = magic.Magic(mime=True)
         file_mime = mime.from_file(file_path)
+        # from_file returns bytes (e.g. b'image/jpeg'), decode to str for comparison
+        if isinstance(file_mime, bytes):
+            file_mime = file_mime.decode('utf-8')
         return file_mime in ['image/jpeg', 'image/png', 'image/gif', 'image/jpg']
     except Exception:
         return False

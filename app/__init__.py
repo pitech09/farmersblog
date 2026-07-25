@@ -69,6 +69,7 @@ def create_app(config_class=None):
     from app.blueprints.messages import messages_bp
     from app.blueprints.groups import groups_bp
     from app.blueprints.marketplace import marketplace_bp
+    from app.blueprints.notifications import notifications_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -77,18 +78,34 @@ def create_app(config_class=None):
     app.register_blueprint(messages_bp, url_prefix='/messages')
     app.register_blueprint(groups_bp, url_prefix='/groups')
     app.register_blueprint(marketplace_bp, url_prefix='/marketplace')
+    app.register_blueprint(notifications_bp)
 
-    # Context processor for unread messages count
+    # Context processor for unread messages, notifications count, and recent notifications
     @app.context_processor
     def inject_unread_count():
         from flask_login import current_user
         if current_user.is_authenticated:
-            from app.models import User
+            from app.models import User, Notification
             user = User.query.get(current_user.id)
-            return {'unread_count': user.unread_message_count}
-        return {'unread_count': 0}
+            recent_notifications = Notification.query.filter_by(
+                recipient_id=current_user.id
+            ).order_by(Notification.created_at.desc()).limit(5).all()
+            return {
+                'unread_count': user.unread_message_count,
+                'notification_unread_count': Notification.query.filter_by(
+                    recipient_id=current_user.id, read=False
+                ).count(),
+                'notifications': recent_notifications
+            }
+        return {'unread_count': 0, 'notification_unread_count': 0, 'notifications': []}
     
     
+    # CSRF token context processor - provides raw token value for meta tag and AJAX
+    @app.context_processor
+    def inject_csrf_token():
+        from flask_wtf.csrf import generate_csrf
+        return dict(csrf_token=generate_csrf)
+
     # Media URL context processor and template filter
     @app.context_processor
     def inject_media_helpers():

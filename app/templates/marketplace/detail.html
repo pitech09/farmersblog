@@ -50,7 +50,7 @@
             <div class="d-flex gap-2">
                 {% if current_user.is_authenticated and current_user.id == listing.seller_id %}
                 <form method="POST" action="{{ url_for('marketplace.mark_sold', listing_id=listing.id) }}" class="d-inline">
-                    {{ csrf_token() }}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-warning rounded-pill px-4">
                         <i class="bi {% if listing.is_sold %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i>
                         {% if listing.is_sold %}Mark Available{% else %}Mark as Sold{% endif %}
@@ -58,13 +58,13 @@
                 </form>
                 <form method="POST" action="{{ url_for('marketplace.delete', listing_id=listing.id) }}" class="d-inline"
                       onsubmit="return confirm('Delete this listing permanently?')">
-                    {{ csrf_token() }}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
                         <i class="bi bi-trash me-1"></i>Delete
                     </button>
                 </form>
-                {% elif current_user.is_authenticated %}
-                <a href="{{ url_for('messages.conversation', username=listing.seller.username) }}?body={{ 'Hi, I\'m interested in your listing: ' + listing.title | urlencode }}"
+                {% elif current_user.is_authenticated and current_user.id != listing.seller_id %}
+                <a href="{{ url_for('messages.conversation', username=listing.seller.username) }}?body={{ 'Hi, I\'m interested in your listing: ' + listing.title | urlencode }}&listing_id={{ listing.id }}"
                    class="btn btn-success rounded-pill px-4">
                     <i class="bi bi-envelope me-1"></i>Contact Seller
                 </a>

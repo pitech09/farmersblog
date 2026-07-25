@@ -1,4 +1,6 @@
 from datetime import datetime
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db, login_manager
 import bleach
 import re
@@ -12,20 +14,6 @@ def sanitize_text(text, max_length=5000):
     cleaned = bleach.clean(text, tags=[], strip=True)
     # Limit length
     return cleaned[:max_length]
-import bleach
-import re
-
-
-def sanitize_text(text, max_length=5000):
-    """Sanitize user input to prevent XSS."""
-    if not text:
-        return text
-    # Strip all HTML tags
-    cleaned = bleach.clean(text, tags=[], strip=True)
-    # Limit length
-    return cleaned[:max_length]
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
 
 
 @login_manager.user_loader
@@ -250,13 +238,30 @@ class Group(db.Model):
         return f'<Group {self.name}>'
 
 
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(30), nullable=False)
+    message = db.Column(db.String(500), nullable=False)
+    link = db.Column(db.String(500), nullable=False)
+    read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    recipient = db.relationship('User', foreign_keys=[recipient_id], backref='notifications')
+    actor = db.relationship('User', foreign_keys=[actor_id], backref='actions')
+
+    def __repr__(self):
+        return f'<Notification {self.id} type={self.type} for User {self.recipient_id}>'
+
+
 class Listing(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     seller_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
-    category = db.Column(db.String(50), nullable=False)  # Seeds, Equipment, Livestock, Produce, Other
+    category = db.Column(db.String(50), nullable=False)
     location = db.Column(db.String(200), default='')
     image_filename = db.Column(db.String(255), nullable=False)
     is_sold = db.Column(db.Boolean, default=False)
@@ -268,7 +273,7 @@ class Listing(db.Model):
     def price_display(self):
         if self.price == 0:
             return 'Free'
-        return f'${self.price:.2f}'
+        return f'M{self.price:.2f}'
 
     def __repr__(self):
         return f'<Listing {self.id}: {self.title}>'

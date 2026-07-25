@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db, limiter
-from app.models import User, Message
+from app.models import User, Message, Notification, Listing
 
 messages_bp = Blueprint('messages', __name__)
 
@@ -11,47 +11,38 @@ messages_bp = Blueprint('messages', __name__)
 @login_required
 @limiter.limit("30 per minute")
 def inbox():
-    # Get all unique conversation partners
-    sent = db.session.query(Message.recipient_id).filter(
-        Message.sender_id == current_user.id
-    ).distinct().subquery()
+    # Get all messages involving current user
+    messages = Message.query.filter(
+        (Message.sender_id == current_user.id) | (Message.recipient_id == current_user.id)
+    ).order_by(Message.timestamp.desc()).all()
 
-    received = db.session.query(Message.sender_id).filter(
-        Message.recipient_id == current_user.id
-    ).distinct().subquery()
+    conversations_dict = {}
+    for msg in messages:
+        other_id = msg.recipient_id if msg.sender_id == current_user.id else msg.sender_id
+        if other_id not in conversations_dict:
+            conversations_dict[other_id] = {
+                'user': User.query.get(other_id),
+                'last_message': msg,
+                'unread_count': 0
+            }
+        # Keep the newest message as last_message
+        if msg.id > conversations_dict[other_id]['last_message'].id:
+            conversations_dict[other_id]['last_message'] = msg
 
-    # Union of all user IDs the current user has conversed with
-    user_ids = set()
-    for row in db.session.query(sent.c.recipient_id).all():
-        user_ids.add(row[0])
-    for row in db.session.query(received.c.sender_id).all():
-        user_ids.add(row[0])
-
+    # Calculate unread counts and filter out invalid users
     conversations = []
-    for uid in user_ids:
-        other_user = User.query.get(uid)
-        if not other_user:
+    for uid, conv in conversations_dict.items():
+        if not conv['user']:
             continue
-        # Get last message
-        last_msg = Message.query.filter(
-            ((Message.sender_id == current_user.id) & (Message.recipient_id == uid)) |
-            ((Message.sender_id == uid) & (Message.recipient_id == current_user.id))
-        ).order_by(Message.timestamp.desc()).first()
-
-        unread_count = Message.query.filter_by(
+        unread = Message.query.filter_by(
             sender_id=uid,
             recipient_id=current_user.id,
             read=False
         ).count()
+        conv['unread_count'] = unread
+        conversations.append(conv)
 
-        conversations.append({
-            'user': other_user,
-            'last_message': last_msg,
-            'unread_count': unread_count
-        })
-
-    # Sort by most recent message
-    conversations.sort(key=lambda c: c['last_message'].timestamp if c['last_message'] else datetime.min, reverse=True)
+    conversations.sort(key=lambda c: c['last_message'].timestamp, reverse=True)
 
     return render_template('messages/inbox.html', conversations=conversations)
 
@@ -64,6 +55,9 @@ def conversation(username):
     if other_user == current_user:
         flash('You cannot message yourself.', 'warning')
         return redirect(url_for('messages.inbox'))
+
+    # No mutual-follow requirement; any authenticated user can message any other user
+    can_message = True
 
     # Mark messages as read
     unread = Message.query.filter_by(
@@ -81,11 +75,12 @@ def conversation(username):
         ((Message.sender_id == other_user.id) & (Message.recipient_id == current_user.id))
     ).order_by(Message.timestamp.asc()).all()
 
-    return render_template('messages/conversation.html', other_user=other_user, messages=messages)
+    return render_template('messages/conversation.html', other_user=other_user, messages=messages, can_message=can_message)
 
 
 @messages_bp.route('/send', methods=['POST'])
 @login_required
+@limiter.limit("30 per minute")
 def send():
     data = request.get_json()
     if not data:
@@ -96,6 +91,10 @@ def send():
 
     if not recipient_username or not body:
         return jsonify({'error': 'Recipient and message body are required.'}), 400
+
+    # Sanitize message body
+    from bleach import clean
+    body = clean(body, tags=[], strip=True)[:5000]
 
     recipient = User.query.filter_by(username=recipient_username).first()
     if not recipient:
@@ -110,6 +109,22 @@ def send():
         body=body
     )
     db.session.add(message)
+    db.session.flush()
+
+    # Check if this is a buyer interest message from a marketplace listing
+    listing_id = data.get('listing_id')
+    if listing_id:
+        listing = Listing.query.get(listing_id)
+        if listing and listing.seller_id == recipient.id:
+            notification = Notification(
+                recipient_id=recipient.id,
+                actor_id=current_user.id,
+                type='buyer_interest',
+                message=f'{current_user.username} is interested in your listing: {listing.title}',
+                link=url_for('messages.conversation', username=current_user.username)
+            )
+            db.session.add(notification)
+
     db.session.commit()
 
     return jsonify({

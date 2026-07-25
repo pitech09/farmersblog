@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from app.forms import ProfileForm
 from app.extensions import db, cache
-from app.models import User, Post, Media
+from app.models import User, Post, Media, Notification
 from app.helpers import get_avatar_url, upload_to_cloudinary
 
 profile_bp = Blueprint('profile', __name__)
@@ -50,12 +50,26 @@ def follow(username):
     if user == current_user:
         return jsonify({'error': 'You cannot follow yourself.'}), 400
 
-    if current_user.is_following(user):
+    is_following = current_user.is_following(user)
+
+    # Idempotency: if already following and requested to follow, return current state
+    # Same for unfollow
+    if is_following:
         current_user.unfollow(user)
         following = False
     else:
         current_user.follow(user)
         following = True
+        # Create notification only on follow, not unfollow
+        notification = Notification(
+            recipient_id=user.id,
+            actor_id=current_user.id,
+            type='follow',
+            message=f'{current_user.username} started following you',
+            link=url_for('profile.public_profile', username=current_user.username)
+        )
+        db.session.add(notification)
+        db.session.commit()
 
     return jsonify({
         'following': following,

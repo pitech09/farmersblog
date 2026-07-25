@@ -1,0 +1,707 @@
+/* Twitter/X-style CSS for farmersblog */
+/* Overrides Bootstrap for a Twitter-like design language */
+
+/* === Color Palette === */
+:root {
+    --twitter-blue: #1d9bf0;
+    --twitter-pink: #f91881;
+    --twitter-green: #00ba7c;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f7f9f9;
+    --text-primary: #0f1419;
+    --text-secondary: #536471;
+    --border-color: #eff3f4;
+    --input-border: #cfd9de;
+    --hover-bg: #f7f9f9;
+}
+
+/* === Typography === */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* === Container === */
+.feed-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: var(--bg-primary);
+}
+
+.feed-divider {
+    border-top: 1px solid var(--border-color);
+}
+
+/* === Navbar === */
+.twitter-nav {
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.twitter-nav .navbar-brand {
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--twitter-blue);
+}
+
+/* === Flash Messages === */
+.alert {
+    border: none;
+    border-radius: 0;
+    padding: 12px 16px;
+    margin: 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* === Post Feed === */
+.post-row {
+    display: flex;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+}
+
+.post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+.post-content {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.post-header {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.post-username {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.post-username:hover {
+    text-decoration: underline;
+}
+
+.post-handle,
+.post-time {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.post-caption {
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    word-wrap: break-word;
+}
+
+.caption-full {
+    display: none;
+}
+
+.read-more-link {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.read-more-link:hover {
+    text-decoration: underline;
+}
+
+/* === Post Media === */
+.post-media {
+    margin-top: 12px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    max-height: 500px;
+}
+
+.post-media img,
+.post-media video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.post-media video {
+    max-height: 500px;
+    object-fit: contain;
+}
+
+.media-counter {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border-radius: 9999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* === Action Bar === */
+.post-actions {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 12px;
+    padding: 0 4px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 9999px;
+    transition: background-color 0.2s;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background-color: var(--hover-bg);
+    color: var(--twitter-blue);
+}
+
+.action-btn.liked .action-icon {
+    color: var(--twitter-pink);
+}
+
+.action-icon {
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+}
+
+.action-count {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* === Buttons === */
+.btn-primary {
+    background-color: var(--twitter-blue);
+    border: none;
+    border-radius: 9999px;
+    color: white;
+    font-weight: 700;
+    padding: 10px 24px;
+    font-size: 15px;
+}
+
+.btn-primary:hover {
+    background-color: #178cd3;
+}
+
+.btn-outline-primary {
+    border: 1px solid var(--twitter-blue);
+    color: var(--twitter-blue);
+    background: transparent;
+    border-radius: 9999px;
+    font-weight: 700;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.btn-outline-primary:hover {
+    background-color: rgba(29, 191, 240, 0.1);
+}
+
+.btn-success {
+    background-color: var(--twitter-green);
+    border: none;
+    border-radius: 9999px;
+    color: white;
+    font-weight: 700;
+}
+
+.btn-success:hover {
+    background-color: #00a06e;
+}
+
+/* === Inputs === */
+.form-control,
+.form-select {
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 15px;
+    background-color: var(--bg-primary);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--twitter-blue);
+    box-shadow: 0 0 0 2px rgba(29, 191, 240, 0.3);
+}
+
+/* === Cards === */
+.card {
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: none;
+    background-color: var(--bg-primary);
+}
+
+/* === Profile Page === */
+.profile-banner {
+    height: 120px;
+    background: linear-gradient(135deg, var(--twitter-blue), #87ceeb);
+    position: relative;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-primary);
+    position: absolute;
+    bottom: -60px;
+    left: 16px;
+    object-fit: cover;
+}
+
+.profile-header {
+    padding: 16px;
+    padding-top: 80px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.profile-stats strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.profile-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.profile-tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.profile-tab.active {
+    color: var(--twitter-blue);
+    border-bottom: 3px solid var(--twitter-blue);
+}
+
+/* === Marketplace === */
+.listing-card {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background-color: var(--bg-primary);
+    overflow: hidden;
+    transition: background-color 0.2s;
+}
+
+.listing-card:hover {
+    background-color: var(--hover-bg);
+}
+
+.listing-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* === Messages === */
+.chat-container {
+    height: calc(100vh - 80px);
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.chat-sidebar {
+    width: 280px;
+    border-right: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+}
+
+.chat-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+}
+
+.message-bubble {
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.message-sent {
+    background-color: var(--twitter-blue);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.message-received {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+
+/* === Groups === */
+.group-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.group-item {
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.group-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--hover-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+}
+
+/* === Pagination === */
+.pagination .page-link {
+    border-radius: 9999px;
+    margin: 0 4px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--hover-bg);
+}
+
+/* === Toast === */
+.toast {
+    border-radius: 16px;
+    border: none;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .feed-container {
+        max-width: 100%;
+    }
+    
+    .post-row {
+        padding: 10px 12px;
+    }
+    
+    .post-avatar {
+        width: 36px;
+        height: 36px;
+        margin-right: 10px;
+    }
+}
+
+/* === Hashtags & Handles === */
+.hashtag,
+.handle {
+    color: var(--twitter-blue);
+}
+
+/* === Like Animation === */
+.liked .action-icon {
+    color: var(--twitter-pink);
+    animation: heartPop 0.3s ease;
+}
+
+@keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* === Bottom Navigation (Mobile-style) === */
+body {
+    padding-bottom: 0;
+}
+
+.main-content {
+    padding-top: 64px;
+    padding-bottom: 80px;
+    min-height: calc(100vh - 60px);
+}
+
+.main-content.no-bottom-nav {
+    padding-bottom: 0;
+}
+
+/* Top bar */
+.top-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    height: 52px;
+    display: flex;
+    align-items: center;
+}
+
+.top-nav-brand {
+    font-size: 18px;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.top-nav-brand:hover {
+    color: var(--text-primary);
+}
+
+.top-nav-icon {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    text-decoration: none;
+    padding: 6px;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+.top-nav-icon:hover {
+    background-color: var(--hover-bg);
+    color: var(--twitter-blue);
+}
+
+/* Bottom navigation bar */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-color);
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 8px;
+    transition: color 0.2s, background-color 0.2s;
+    position: relative;
+    min-width: 56px;
+}
+
+.bottom-nav-item i {
+    font-size: 1.35rem;
+    transition: transform 0.2s;
+}
+
+.bottom-nav-item:hover {
+    color: var(--twitter-blue);
+    background-color: rgba(29, 155, 240, 0.08);
+}
+
+.bottom-nav-item:hover i {
+    transform: scale(1.1);
+}
+
+.bottom-nav-item.active {
+    color: var(--twitter-blue);
+}
+
+.bottom-nav-item.active i {
+    font-weight: 700;
+}
+
+.bottom-nav-item.active span {
+    font-weight: 600;
+}
+
+/* Create button (center, larger) */
+.bottom-nav-create {
+    margin-top: -24px;
+}
+
+.create-btn {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--twitter-blue), #1a8cd8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 14px rgba(29, 155, 240, 0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.create-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(29, 155, 240, 0.45);
+}
+
+.create-btn i {
+    font-size: 1.4rem;
+}
+
+.bottom-nav-avatar {
+    width: 22px;
+    height: 22px;
+    object-fit: cover;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.bottom-nav-item.active .bottom-nav-avatar {
+    border-color: var(--twitter-blue);
+}
+
+/* Toast adjustment for bottom nav */
+.toast-container {
+    bottom: 80px !important;
+}
+
+/* Responsive adjustments for larger screens */
+@media (min-width: 768px) {
+    .bottom-nav-item {
+        font-size: 0.7rem;
+        padding: 6px 18px;
+    }
+
+    .bottom-nav-item i {
+        font-size: 1.4rem;
+    }
+}
+
+/* === Notifications === */
+.notification-unread {
+    background-color: #f0f7ff;
+    border-left: 3px solid var(--twitter-blue) !important;
+}
+
+.notification-unread .notification-text {
+    font-weight: 600;
+}
+
+#notificationMenu .dropdown-item:active {
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+#notificationMenu .dropdown-item:hover {
+    background-color: var(--hover-bg);
+}
+
+#notificationMenu {
+    scrollbar-width: thin;
+}
+
+#notificationMenu::-webkit-scrollbar {
+    width: 4px;
+}
+
+#notificationMenu::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 4px;
+}
+
+.list-group-item.notification-unread {
+    background-color: #f0f7ff;
+    border-left: 3px solid var(--twitter-blue) !important;
+}
+
+.mark-read-btn {
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.mark-read-btn:hover {
+    opacity: 1;
+}

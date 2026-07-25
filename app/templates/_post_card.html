@@ -1,20 +1,20 @@
-<div class="card shadow-sm rounded-4 mb-4 border-0 post-card">
-    <div class="card-header bg-white rounded-top-4 d-flex align-items-center py-3 px-4 border-0">
-        <div class="d-flex align-items-center gap-3 flex-grow-1">
-            <a href="{{ url_for('profile.public_profile', username=post.author.username) }}" class="text-decoration-none d-flex align-items-center gap-3">
-                {% if post.author.avatar_filename %}
-                <img src="{{ avatar_url(post.author.avatar_filename) }}"
-                     class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Avatar">
-                {% else %}
-                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                    <i class="bi bi-person-fill text-primary"></i>
-                </div>
-                {% endif %}
-                <div>
-                    <h6 class="mb-0 fw-semibold">{{ post.author.username }}</h6>
-                    <small class="text-muted">{{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}</small>
-                </div>
+<div class="post-row">
+    <a href="{{ url_for('profile.public_profile', username=post.author.username) }}" class="post-avatar-link">
+        {% if post.author.avatar_filename %}
+        <img src="{{ avatar_url(post.author.avatar_filename) }}" class="post-avatar" alt="Avatar">
+        {% else %}
+        <div class="post-avatar bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+            <i class="bi bi-person-fill text-primary"></i>
+        </div>
+        {% endif %}
+    </a>
+    <div class="post-content">
+        <div class="post-header">
+            <a href="{{ url_for('profile.public_profile', username=post.author.username) }}" class="post-username text-decoration-none">
+                {{ post.author.username }}
             </a>
+            <span class="post-time text-muted">@{{ post.author.username }}</span>
+            <span class="post-time text-muted">· {{ post.created_at.strftime('%b %d') }}</span>
             {% if post.group_id and post.group %}
             <span class="ms-auto">
                 <a href="{{ url_for('groups.detail', group_name=post.group.name) }}" class="badge bg-light text-dark rounded-pill text-decoration-none">
@@ -23,74 +23,58 @@
             </span>
             {% endif %}
         </div>
-    </div>
-    {% set first_media = post.first_media %}
-    {% if first_media %}
-    <a href="{{ url_for('main.post_detail', post_id=post.id) }}" class="text-decoration-none d-block position-relative">
-        {% if first_media.media_type == 'video' %}
-        <div class="position-relative">
-            <video class="card-img-top post-image" style="object-fit: cover;" muted preload="metadata">
-                <source src="{{ media_url(first_media.filename) }}" type="video/mp4">
-            </video>
-            <div class="position-absolute top-50 start-50 translate-middle">
-                <div class="bg-dark bg-opacity-50 rounded-circle p-3">
-                    <i class="bi bi-play-fill text-white" style="font-size: 2rem;"></i>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <img src="{{ media_url(first_media.filename) }}"
-             class="card-img-top post-image"
-             alt="Post image"
-             loading="lazy">
-        {% endif %}
-        {% if post.media_count > 1 %}
-        <span class="badge bg-dark bg-opacity-75 position-absolute top-0 end-0 m-3 rounded-pill">
-            <i class="bi bi-images me-1"></i>+{{ post.media_count - 1 }} more
-        </span>
-        {% endif %}
-    </a>
-    {% endif %}
-    <div class="card-body px-4 pb-2">
         {% if post.has_long_caption %}
-        <p class="card-text mb-2">
+        <p class="post-caption mb-2">
             <span class="caption-preview">{{ post.caption_preview }}</span>
             <span class="caption-full d-none">{{ post.caption }}</span>
-            <a href="javascript:void(0)" class="text-decoration-none small fw-semibold read-more-link" onclick="toggleReadMore(this)">read more</a>
+            <a href="javascript:void(0)" class="read-more-link" onclick="toggleReadMore(this)">Show more</a>
         </p>
         {% else %}
-        <p class="card-text mb-2">{{ post.caption }}</p>
+        <p class="post-caption mb-2">{{ post.caption }}</p>
         {% endif %}
-        <div class="d-flex align-items-center gap-3 mt-3">
-            <!-- Like Button -->
+        {% set first_media = post.first_media %}
+        {% if first_media %}
+        <div class="position-relative">
+            <a href="{{ url_for('main.post_detail', post_id=post.id) }}" class="text-decoration-none d-block">
+                <div class="post-media">
+                    {% if first_media.media_type == 'video' %}
+                    <video class="w-100" controls muted preload="metadata">
+                        <source src="{{ media_url(first_media.filename) }}" type="video/mp4">
+                    </video>
+                    {% else %}
+                    <img src="{{ media_url(first_media.filename) }}" class="w-100" alt="Post image" loading="lazy">
+                    {% endif %}
+                </div>
+            </a>
+            {% if post.media_count > 1 %}
+            <span class="media-counter">
+                <i class="bi bi-images me-1"></i>{{ post.media_count }}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+        <div class="post-actions">
             {% if current_user.is_authenticated %}
-            <button class="btn btn-sm btn-like rounded-pill d-flex align-items-center gap-1 {% if post.user_has_liked %}liked{% endif %}"
+            <button class="action-btn {% if post.user_has_liked %}liked{% endif %}"
                     data-post-id="{{ post.id }}"
                     onclick="toggleLike(this)">
-                <i class="bi {% if post.user_has_liked %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
-                <span class="like-count">{{ post.like_count }}</span>
+                <span class="action-icon">
+                    <i class="bi {% if post.user_has_liked %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                </span>
+                <span class="action-count">{{ post.like_count }}</span>
             </button>
             {% else %}
-            <button class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
-                    data-bs-toggle="tooltip" title="Login required"
-                    onclick="window.location.href='{{ url_for('auth.login') }}'">
-                <i class="bi bi-heart"></i>
-                <span>{{ post.like_count }}</span>
+            <button class="action-btn" onclick="window.location.href='{{ url_for('auth.login') }}'">
+                <span class="action-icon"><i class="bi bi-heart"></i></span>
+                <span class="action-count">{{ post.like_count }}</span>
             </button>
             {% endif %}
-
-            <!-- Comment Button -->
-            <a href="{{ url_for('main.post_detail', post_id=post.id) }}"
-               class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1">
-                <i class="bi bi-chat"></i>
-                <span>{{ post.comment_count }}</span>
+            <a href="{{ url_for('main.post_detail', post_id=post.id) }}" class="action-btn">
+                <span class="action-icon"><i class="bi bi-chat"></i></span>
+                <span class="action-count">{{ post.comment_count }}</span>
             </a>
-
-            <!-- Share Button -->
-            <button class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
-                    onclick="sharePost({{ post.id }})"
-                    {% if not current_user.is_authenticated %}data-bs-toggle="tooltip" title="Login required"{% endif %}>
-                <i class="bi bi-share"></i>
+            <button class="action-btn" onclick="sharePost({{ post.id }})">
+                <span class="action-icon"><i class="bi bi-share"></i></span>
             </button>
         </div>
     </div>

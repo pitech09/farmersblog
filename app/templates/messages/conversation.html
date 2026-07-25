@@ -61,17 +61,40 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     const recipientUsername = '{{ other_user.username }}';
     const currentUsername = '{{ current_user.username }}';
     let lastMessageId = {{ messages[-1].id if messages else 0 }};
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const urlParams = new URLSearchParams(window.location.search);
+    const listingId = urlParams.get('listing_id');
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfMeta) {
+        console.error('CSRF meta tag missing');
+        return;
+    }
+    const csrfToken = csrfMeta.getAttribute('content');
+    console.log('CSRF token present, length:', csrfToken.length);
 
-    // Send message
-    document.getElementById('messageForm').addEventListener('submit', function(e) {
+    const messageForm = document.getElementById('messageForm');
+    if (!messageForm) {
+        console.error('messageForm not found');
+        return;
+    }
+    console.log('messageForm found');
+    const sendButton = messageForm.querySelector('button[type="submit"]');
+    const messageInput = document.getElementById('messageInput');
+
+    messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const input = document.getElementById('messageInput');
-        const body = input.value.trim();
+        const body = messageInput.value.trim();
         if (!body) return;
+
+        // Disable button and show loading state
+        sendButton.disabled = true;
+        const originalHTML = sendButton.innerHTML;
+        sendButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending';
+
+        console.log('Sending message to:', recipientUsername, 'body:', body);
 
         fetch('{{ url_for("messages.send") }}', {
             method: 'POST',
@@ -82,21 +105,34 @@
             },
             body: JSON.stringify({
                 recipient_username: recipientUsername,
-                body: body
+                body: body,
+                listing_id: listingId || null
             })
         })
-        .then(function(response) { return response.json(); })
+        .then(function(response) {
+            console.log('Send response status:', response.status);
+            if (!response.ok) {
+                // Try to parse error JSON, but if not JSON (like a 500), treat as server error
+                return response.json().then(function(data) { throw new Error(data.error || 'Unknown server error'); })
+                              .catch(function() { throw new Error('Server error (status ' + response.status + ')'); });
+            }
+            return response.json();
+        })
         .then(function(data) {
+            console.log('Send success:', data);
             if (data.success) {
                 appendMessage(data.body, data.timestamp, true);
-                input.value = '';
+                messageInput.value = '';
                 lastMessageId = data.id;
-            } else if (data.error) {
-                console.error(data.error);
             }
         })
         .catch(function(error) {
-            console.error('Error sending message:', error);
+            console.error('Send failed:', error);
+            alert('Failed to send message: ' + error.message);
+        })
+        .finally(function() {
+            sendButton.disabled = false;
+            sendButton.innerHTML = originalHTML;
         });
     });
 
@@ -116,7 +152,8 @@
         chat.scrollTop = chat.scrollHeight;
     }
 
-    // Poll for new messages every 8 seconds
+    // Poll for new messages every 8 seconds (only if can_message)
+    {% if can_message %}
     setInterval(function() {
         fetch('{{ url_for("messages.poll_messages", username=other_user.username) }}?since=' + lastMessageId, {
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken }
@@ -134,11 +171,19 @@
             console.error('Error polling messages:', error);
         });
     }, 8000);
+    {% endif %}
 
-    // Scroll to bottom on load
-    document.addEventListener('DOMContentLoaded', function() {
-        const chat = document.getElementById('chatMessages');
-        chat.scrollTop = chat.scrollHeight;
-    });
+    // Pre-fill message from URL query param (e.g. from marketplace "Contact Seller")
+    const chat = document.getElementById('chatMessages');
+    chat.scrollTop = chat.scrollHeight;
+
+    const prefillBody = urlParams.get('body');
+    if (prefillBody) {
+        if (messageInput) {
+            messageInput.value = prefillBody;
+            messageInput.focus();
+        }
+    }
+});
 </script>
 {% endblock %}
