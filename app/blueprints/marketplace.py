@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import magic
+from app.forms import ListingForm
 from app.extensions import db, limiter, cache
 from app.models import Listing, User
 from app.helpers import get_media_url, upload_to_cloudinary
@@ -57,40 +58,23 @@ def index():
 def create():
     categories = ['Seeds', 'Equipment', 'Livestock', 'Produce', 'Other']
     
-    if request.method == 'POST':
-        title = request.form.get('title', '').strip()
-        description = request.form.get('description', '').strip()
-        price = request.form.get('price', type=float)
-        category = request.form.get('category', '')
-        location = request.form.get('location', '').strip()
-        image_file = request.files.get('image')
-        
+    form = ListingForm(categories=categories)
+    if form.validate_on_submit():
         # Sanitize inputs
         from bleach import clean
-        title = clean(title, tags=[], strip=True)[:200]
-        description = clean(description, tags=[], strip=True)[:5000]
-        if location:
-            location = clean(location, tags=[], strip=True)[:200]
-        
-        # Validation
-        if not title or not description or not price or not category:
-            flash('Please fill in all required fields.', 'danger')
-            return render_template('marketplace/create.html', categories=categories)
-        
-        if category not in categories:
-            flash('Invalid category selected.', 'danger')
-            return render_template('marketplace/create.html', categories=categories)
-        
-        if price < 0:
-            flash('Price cannot be negative.', 'danger')
-            return render_template('marketplace/create.html', categories=categories)
-        
+        title = clean(form.title.data, tags=[], strip=True)[:200]
+        description = clean(form.description.data, tags=[], strip=True)[:5000]
+        location = clean(form.location.data or '', tags=[], strip=True)[:200]
+        price = form.price.data
+        category = form.category.data
+
         # Handle image upload
         image_filename = None
+        image_file = form.image.data
         if image_file and image_file.filename:
             if not allowed_image_file(image_file.filename):
                 flash('Invalid image type. Allowed: PNG, JPG, JPEG, GIF', 'danger')
-                return render_template('marketplace/create.html', categories=categories)
+                return render_template('marketplace/create.html', form=form, categories=categories)
             
             # Check file size
             image_file.seek(0, os.SEEK_END)
@@ -99,30 +83,27 @@ def create():
             
             if file_size > current_app.config['MAX_CONTENT_LENGTH']:
                 flash('Image too large. Maximum size is 50MB.', 'danger')
-                return render_template('marketplace/create.html', categories=categories)
+                return render_template('marketplace/create.html', form=form, categories=categories)
             
             unique_name = f"{uuid.uuid4().hex}_{secure_filename(image_file.filename)}"
             
             # Determine storage based on configuration
             if current_app.config.get('CLOUDINARY_ENABLED'):
-                # Upload to Cloudinary in production
                 public_id = upload_to_cloudinary(image_file, resource_type='image')
                 if not public_id:
                     flash('Failed to upload image to cloud storage.', 'danger')
-                    return render_template('marketplace/create.html', categories=categories)
+                    return render_template('marketplace/create.html', form=form, categories=categories)
                 image_filename = public_id
             else:
-                # Save locally in development
                 upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'marketplace')
                 os.makedirs(upload_path, exist_ok=True)
                 full_path = os.path.join(upload_path, unique_name)
                 image_file.save(full_path)
                 
-                # Validate MIME type
                 if not validate_image_mime(full_path):
                     os.remove(full_path)
                     flash('Invalid image file.', 'danger')
-                    return render_template('marketplace/create.html', categories=categories)
+                    return render_template('marketplace/create.html', form=form, categories=categories)
                 
                 image_filename = f"marketplace/{unique_name}"
         else:
@@ -144,7 +125,7 @@ def create():
         flash('Listing created successfully!', 'success')
         return redirect(url_for('marketplace.index'))
     
-    return render_template('marketplace/create.html', categories=categories)
+    return render_template('marketplace/create.html', form=form, categories=categories)
 
 
 @marketplace_bp.route('/<int:listing_id>')

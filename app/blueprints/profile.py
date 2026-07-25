@@ -3,6 +3,7 @@ import uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+from app.forms import ProfileForm
 from app.extensions import db, cache
 from app.models import User, Post, Media
 from app.helpers import get_avatar_url, upload_to_cloudinary
@@ -65,50 +66,40 @@ def follow(username):
 @profile_bp.route('/settings/profile', methods=['GET', 'POST'])
 @login_required
 def settings():
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        bio = request.form.get('bio', '').strip()
-
-        if not username:
-            flash('Username is required.', 'danger')
-            return render_template('profile/settings.html')
-
-        # Check username uniqueness
-        existing = User.query.filter_by(username=username).first()
-        if existing and existing.id != current_user.id:
-            flash('Username already taken.', 'danger')
-            return render_template('profile/settings.html')
-
-        current_user.username = username
-        current_user.bio = bio[:300]  # Max 300 chars
+    form = ProfileForm(current_user_id=current_user.id)
+    if form.validate_on_submit():
+        current_user.username = form.username.data.strip()
+        current_user.bio = (form.bio.data or '')[:300]
 
         # Handle avatar upload
-        if 'avatar' in request.files:
-            file = request.files['avatar']
-            if file.filename:
-                if allowed_image(file.filename):
-                    ext = file.filename.rsplit('.', 1)[1].lower()
-                    unique_name = f"avatar_{uuid.uuid4().hex}.{ext}"
-                    
-                    if current_app.config.get('CLOUDINARY_ENABLED'):
-                        # Upload to Cloudinary in production
-                        public_id = upload_to_cloudinary(file, resource_type='image')
-                        if not public_id:
-                            flash('Failed to upload avatar to cloud storage.', 'danger')
-                            return render_template('profile/settings.html')
-                        current_user.avatar_filename = public_id
-                    else:
-                        # Save locally in development
-                        upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars')
-                        os.makedirs(upload_path, exist_ok=True)
-                        file.save(os.path.join(upload_path, unique_name))
-                        current_user.avatar_filename = f"avatars/{unique_name}"
+        file = form.avatar.data
+        if file and file.filename:
+            if allowed_image(file.filename):
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                unique_name = f"avatar_{uuid.uuid4().hex}.{ext}"
+                
+                if current_app.config.get('CLOUDINARY_ENABLED'):
+                    public_id = upload_to_cloudinary(file, resource_type='image')
+                    if not public_id:
+                        flash('Failed to upload avatar to cloud storage.', 'danger')
+                        return render_template('profile/settings.html', form=form)
+                    current_user.avatar_filename = public_id
                 else:
-                    flash('Invalid avatar file type. Allowed: png, jpg, jpeg, gif', 'danger')
-                    return render_template('profile/settings.html')
+                    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'avatars')
+                    os.makedirs(upload_path, exist_ok=True)
+                    file.save(os.path.join(upload_path, unique_name))
+                    current_user.avatar_filename = f"avatars/{unique_name}"
+            else:
+                flash('Invalid avatar file type. Allowed: png, jpg, jpeg, gif', 'danger')
+                return render_template('profile/settings.html', form=form)
 
         db.session.commit()
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile.public_profile', username=current_user.username))
 
-    return render_template('profile/settings.html')
+    # Pre-populate form with current data on GET
+    if request.method == 'GET':
+        form.username.data = current_user.username
+        form.bio.data = current_user.bio or ''
+
+    return render_template('profile/settings.html', form=form)

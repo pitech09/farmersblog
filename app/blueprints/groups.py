@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
+from app.forms import GroupForm
 from app.extensions import db, limiter
 from app.models import Group, Post, User
 
@@ -19,21 +20,11 @@ def index():
 @groups_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        description = request.form.get('description', '').strip()
-
-        if not name:
-            flash('Group name is required.', 'danger')
-            return render_template('groups/create.html')
-
-        if Group.query.filter_by(name=name).first():
-            flash('A group with that name already exists.', 'danger')
-            return render_template('groups/create.html')
-
+    form = GroupForm()
+    if form.validate_on_submit():
         group = Group(
-            name=name,
-            description=description,
+            name=form.name.data.strip(),
+            description=form.description.data or '',
             creator_id=current_user.id
         )
         db.session.add(group)
@@ -43,10 +34,10 @@ def create():
         group.members.append(current_user)
         db.session.commit()
 
-        flash(f'Group "{name}" created successfully!', 'success')
-        return redirect(url_for('groups.detail', group_name=name))
+        flash(f'Group "{group.name}" created successfully!', 'success')
+        return redirect(url_for('groups.detail', group_name=group.name))
 
-    return render_template('groups/create.html')
+    return render_template('groups/create.html', form=form)
 
 
 @groups_bp.route('/<group_name>')

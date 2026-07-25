@@ -11,6 +11,7 @@
                 <p class="text-muted">Share photos and videos with the farming community</p>
             </div>
             <form method="POST" action="{{ url_for('posts.create') }}" enctype="multipart/form-data">
+                {{ form.csrf_token }}
                 <div class="mb-4">
                     <label for="media" class="form-label fw-semibold">Upload Media</label>
                     <div class="upload-area border-2 border-dashed rounded-4 p-5 text-center bg-light" id="uploadArea">
@@ -30,17 +31,12 @@
                 </div>
                 <div class="mb-4">
                     <label for="caption" class="form-label fw-semibold">Caption</label>
-                    <textarea id="caption" name="caption" class="form-control bg-light border-0 rounded-4 p-3" rows="4" placeholder="Write something about your photos..." required></textarea>
+                    {{ form.caption(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="Write something about your photos...", required=true) }}
                 </div>
                 {% if groups %}
                 <div class="mb-4">
                     <label for="group_id" class="form-label fw-semibold">Post to a Group (optional)</label>
-                    <select id="group_id" name="group_id" class="form-select bg-light border-0 rounded-4 p-3">
-                        <option value="">— Public Feed —</option>
-                        {% for group in groups %}
-                        <option value="{{ group.id }}" {% if preselected_group and group.name == preselected_group %}selected{% endif %}>{{ group.name }}</option>
-                        {% endfor %}
-                    </select>
+                    {{ form.group_id(class="form-select bg-light border-0 rounded-4 p-3") }}
                 </div>
                 {% endif %}
                 <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">

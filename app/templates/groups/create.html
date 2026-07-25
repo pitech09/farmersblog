@@ -11,13 +11,14 @@
                 <p class="text-muted">Bring farmers together around a common interest</p>
             </div>
             <form method="POST" action="{{ url_for('groups.create') }}">
+                {{ form.csrf_token }}
                 <div class="mb-3">
                     <label for="name" class="form-label fw-semibold">Group Name</label>
-                    <input type="text" id="name" name="name" class="form-control bg-light border-0 rounded-4 p-3" placeholder="e.g., Organic Farming Tips" required>
+                    {{ form.name(class="form-control bg-light border-0 rounded-4 p-3", placeholder="e.g., Organic Farming Tips", required=true) }}
                 </div>
                 <div class="mb-3">
                     <label for="description" class="form-label fw-semibold">Description (optional)</label>
-                    <textarea id="description" name="description" class="form-control bg-light border-0 rounded-4 p-3" rows="4" placeholder="What is this group about?"></textarea>
+                    {{ form.description(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="What is this group about?") }}
                 </div>
                 <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">
                     <i class="bi bi-plus-circle me-2"></i>Create Group

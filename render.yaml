@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: farmersblog
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: farmersblog_db
+          property: connectionString
+      - key: CLOUDINARY_ENABLED
+        value: 'true'
+      - key: CLOUDINARY_CLOUD_NAME
+        value: phdstey0
+      - key: CLOUDINARY_API_KEY
+        value: '425289131974955'
+      - key: CLOUDINARY_API_SECRET
+        value: '5N2cn2L_YDk2Tus1hTkXEV2dtsk'
+      - key: REDIS_URL
+        fromService:
+          name: farmersblog_redis
+          type: redis
+          property: connectionString
+
+databases:
+  - name: farmersblog_db
+    plan: free
+
+redis:
+  - name: farmersblog_redis
+    plan: free

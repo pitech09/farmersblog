@@ -50,6 +50,7 @@
             <div class="d-flex gap-2">
                 {% if current_user.is_authenticated and current_user.id == listing.seller_id %}
                 <form method="POST" action="{{ url_for('marketplace.mark_sold', listing_id=listing.id) }}" class="d-inline">
+                    {{ csrf_token() }}
                     <button type="submit" class="btn btn-outline-warning rounded-pill px-4">
                         <i class="bi {% if listing.is_sold %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i>
                         {% if listing.is_sold %}Mark Available{% else %}Mark as Sold{% endif %}
@@ -57,6 +58,7 @@
                 </form>
                 <form method="POST" action="{{ url_for('marketplace.delete', listing_id=listing.id) }}" class="d-inline"
                       onsubmit="return confirm('Delete this listing permanently?')">
+                    {{ csrf_token() }}
                     <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
                         <i class="bi bi-trash me-1"></i>Delete
                     </button>

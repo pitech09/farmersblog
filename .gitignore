@@ -1,2 +1,24 @@
+# Environment variables
 .env
-.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+instance/
+farmersblog.egg-info/
+
+# Uploads (local dev storage, not for git)
+app/instance/uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log

@@ -64,6 +64,7 @@
     const recipientUsername = '{{ other_user.username }}';
     const currentUsername = '{{ current_user.username }}';
     let lastMessageId = {{ messages[-1].id if messages else 0 }};
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     // Send message
     document.getElementById('messageForm').addEventListener('submit', function(e) {
@@ -76,7 +77,8 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({
                 recipient_username: recipientUsername,
@@ -117,7 +119,7 @@
     // Poll for new messages every 8 seconds
     setInterval(function() {
         fetch('{{ url_for("messages.poll_messages", username=other_user.username) }}?since=' + lastMessageId, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrfToken }
         })
         .then(function(response) { return response.json(); })
         .then(function(data) {

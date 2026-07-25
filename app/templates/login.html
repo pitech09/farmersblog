@@ -11,13 +11,14 @@
                 <p class="text-muted">Login to your farmersblog account</p>
             </div>
             <form method="POST" action="{{ url_for('auth.login') }}">
+                {{ form.csrf_token }}
                 <div class="mb-3">
                     <label for="email" class="form-label fw-semibold">Email</label>
-                    <input type="email" id="email" name="email" class="form-control rounded-pill bg-light border-0 py-2 px-3" placeholder="Enter your email" required>
+                    {{ form.email(class="form-control rounded-pill bg-light border-0 py-2 px-3", placeholder="Enter your email", required=true) }}
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label fw-semibold">Password</label>
-                    <input type="password" id="password" name="password" class="form-control rounded-pill bg-light border-0 py-2 px-3" placeholder="Enter your password" required>
+                    {{ form.password(class="form-control rounded-pill bg-light border-0 py-2 px-3", placeholder="Enter your password", required=true) }}
                 </div>
                 <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">Login</button>
             </form>

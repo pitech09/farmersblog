@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import magic
+from app.forms import PostForm
 from app.extensions import db, limiter
 from app.models import Post, Media, Comment, Group, User
 from app.helpers import get_media_url, upload_to_cloudinary
@@ -51,18 +52,14 @@ def create():
     groups = Group.query.filter(Group.members.any(id=current_user.id)).all()
     preselected_group = request.args.get('group')
 
-    if request.method == 'POST':
-        caption = request.form.get('caption', '').strip()
-        group_id = request.form.get('group_id', type=int)
+    form = PostForm()
+    form.group_id.choices = [('', '— Public Feed —')] + [(g.id, g.name) for g in groups]
 
-        # Sanitize caption
-        if caption:
-            from bleach import clean
-            caption = clean(caption, tags=[], strip=True)[:5000]
-
-        if not caption:
-            flash('Caption is required.', 'danger')
-            return render_template('posts/create.html', groups=groups, preselected_group=preselected_group)
+    if form.validate_on_submit():
+        caption = form.caption.data.strip() if form.caption.data else ''
+        from bleach import clean
+        caption = clean(caption, tags=[], strip=True)[:5000]
+        group_id = form.group_id.data or None
 
         # If posting to a group, verify membership
         if group_id:
@@ -94,7 +91,7 @@ def create():
             if ext not in allowed_exts:
                 flash(f'Invalid file type: .{ext}. Allowed: png, jpg, jpeg, gif, mp4, webm, mov', 'danger')
                 db.session.rollback()
-                return render_template('posts/create.html', groups=groups)
+                return render_template('posts/create.html', form=form, groups=groups, preselected_group=preselected_group)
 
             # Check file size
             file.seek(0, os.SEEK_END)
@@ -104,7 +101,7 @@ def create():
             if file_size > current_app.config['MAX_CONTENT_LENGTH']:
                 flash(f'File too large: {file.filename}. Maximum size is 50MB.', 'danger')
                 db.session.rollback()
-                return render_template('posts/create.html', groups=groups)
+                return render_template('posts/create.html', form=form, groups=groups, preselected_group=preselected_group)
 
             media_type = 'image' if ext in current_app.config['ALLOWED_EXTENSIONS'] else 'video'
             unique_name = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"

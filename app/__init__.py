@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from app.config import get_config
 from app.extensions import db, login_manager, limiter, csrf, cache
+from flask_migrate import Migrate
 
 
 def create_app(config_class=None):
@@ -44,6 +45,9 @@ def create_app(config_class=None):
     # Initialize Flask-Caching
     cache.init_app(app)
     
+    # Initialize Flask-Migrate for database migrations
+    migrate = Migrate(app, db)
+    
     # Initialize Cloudinary (production only)
     if app.config.get('CLOUDINARY_ENABLED'):
         try:
@@ -84,11 +88,6 @@ def create_app(config_class=None):
             return {'unread_count': user.unread_message_count}
         return {'unread_count': 0}
     
-    # CSRF token context processor
-    @app.context_processor
-    def inject_csrf_token():
-        from flask_wtf.csrf import generate_csrf
-        return dict(csrf_token=generate_csrf)
     
     # Media URL context processor and template filter
     @app.context_processor

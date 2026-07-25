@@ -1,5 +1,8 @@
 // farmersblog - Frontend JavaScript
 
+// CSRF token helper
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
 // Initialize Bootstrap tooltips
 document.addEventListener('DOMContentLoaded', function () {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -86,7 +89,8 @@ function toggleLike(button) {
     fetch('/posts/' + postId + '/like', {
         method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(function (response) {
@@ -123,7 +127,8 @@ function toggleFollow(button) {
     fetch('/user/' + username + '/follow', {
         method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(function (response) { return response.json(); })
@@ -161,7 +166,8 @@ function toggleGroupJoin(button) {
     fetch('/groups/' + encodeURIComponent(groupName) + '/join', {
         method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(function (response) { return response.json(); })
@@ -200,7 +206,8 @@ function submitComment(form) {
         method: 'POST',
         body: formData,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(function (response) {

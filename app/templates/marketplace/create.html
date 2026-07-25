@@ -11,39 +11,35 @@
                 <p class="text-muted">Sell your farming items to the community</p>
             </div>
             <form method="POST" action="{{ url_for('marketplace.create') }}" enctype="multipart/form-data">
+                {{ form.csrf_token }}
                 <div class="mb-3">
                     <label for="title" class="form-label fw-semibold">Title</label>
-                    <input type="text" id="title" name="title" class="form-control bg-light border-0 rounded-4 p-3" placeholder="e.g., John Deere Tractor" required>
+                    {{ form.title(class="form-control bg-light border-0 rounded-4 p-3", placeholder="e.g., John Deere Tractor", required=true) }}
                 </div>
                 <div class="mb-3">
                     <label for="description" class="form-label fw-semibold">Description</label>
-                    <textarea id="description" name="description" class="form-control bg-light border-0 rounded-4 p-3" rows="4" placeholder="Describe your item..." required></textarea>
+                    {{ form.description(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="Describe your item...", required=true) }}
                 </div>
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label for="price" class="form-label fw-semibold">Price ($)</label>
-                        <input type="number" id="price" name="price" class="form-control bg-light border-0 rounded-4 p-3" step="0.01" min="0" placeholder="0.00" required>
+                        {{ form.price(class="form-control bg-light border-0 rounded-4 p-3", step="0.01", min="0", placeholder="0.00", required=true) }}
                     </div>
                     <div class="col-md-6">
                         <label for="category" class="form-label fw-semibold">Category</label>
-                        <select id="category" name="category" class="form-select bg-light border-0 rounded-4 p-3" required>
-                            <option value="">Select category</option>
-                            {% for cat in categories %}
-                            <option value="{{ cat }}">{{ cat }}</option>
-                            {% endfor %}
-                        </select>
+                        {{ form.category(class="form-select bg-light border-0 rounded-4 p-3", required=true) }}
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="location" class="form-label fw-semibold">Location (optional)</label>
-                    <input type="text" id="location" name="location" class="form-control bg-light border-0 rounded-4 p-3" placeholder="e.g., Springfield, IL">
+                    {{ form.location(class="form-control bg-light border-0 rounded-4 p-3", placeholder="e.g., Springfield, IL") }}
                 </div>
                 <div class="mb-4">
                     <label for="image" class="form-label fw-semibold">Image</label>
                     <div class="upload-area border-2 border-dashed rounded-4 p-4 text-center bg-light" id="uploadArea">
                         <i class="bi bi-image" style="font-size: 2rem; color: #28a745;"></i>
                         <p class="mt-2 mb-1 fw-semibold small">Click to upload an image</p>
-                        <input type="file" id="image" name="image" class="form-control d-none" accept="image/png,image/jpg,image/jpeg,image/gif" required>
+                        {{ form.image(class="form-control d-none", accept="image/png,image/jpg,image/jpeg,image/gif") }}
                         <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="document.getElementById('image').click()">Choose Image</button>
                     </div>
                     <div id="imagePreview" class="mt-2 d-none">
