@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}My Listings - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="fw-bold mb-0"><i class="bi bi-list me-2"></i>My Listings</h4>
+        <a href="{{ url_for('marketplace.create') }}" class="btn btn-success btn-sm rounded-pill px-3">
+            <i class="bi bi-plus-lg me-1"></i>New Listing
+        </a>
+    </div>
+
+    {% if listings %}
+    <div class="list-group rounded-4 shadow-sm overflow-hidden">
+        {% for listing in listings %}
+        <div class="list-group-item border-0 border-bottom d-flex align-items-center gap-3 py-3 px-4">
+            <img src="{{ media_url(listing.image_filename) }}"
+                 class="rounded-3" style="width: 64px; height: 64px; object-fit: cover;" alt="{{ listing.title }}">
+            <div class="flex-grow-1 min-width-0">
+                <h6 class="fw-semibold mb-1">
+                    {{ listing.title }}
+                    {% if listing.is_sold %}<span class="badge bg-danger rounded-pill ms-1">Sold</span>{% endif %}
+                </h6>
+                <small class="text-muted">{{ listing.category }} — {{ listing.price_display }}</small>
+            </div>
+            <div class="d-flex gap-1">
+                <a href="{{ url_for('marketplace.detail', listing_id=listing.id) }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="bi bi-eye"></i>
+                </a>
+                <form method="POST" action="{{ url_for('marketplace.mark_sold', listing_id=listing.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill">
+                        <i class="bi {% if listing.is_sold %}bi-check-circle{% else %}bi-x-circle{% endif %}"></i>
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('marketplace.delete', listing_id=listing.id) }}" class="d-inline"
+                      onsubmit="return confirm('Delete this listing permanently?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-basket" style="font-size: 4rem; color: #ccc;"></i>
+        <h4 class="mt-3 text-muted">No listings yet</h4>
+        <p class="text-muted">Create your first listing to start selling!</p>
+        <a href="{{ url_for('marketplace.create') }}" class="btn btn-success rounded-pill px-4">
+            <i class="bi bi-plus-circle me-1"></i>Create Listing
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

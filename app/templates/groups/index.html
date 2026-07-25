@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Groups - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Groups</h4>
+        <a href="{{ url_for('groups.create') }}" class="btn btn-primary btn-sm rounded-pill px-3">
+            <i class="bi bi-plus-lg me-1"></i>Create Group
+        </a>
+    </div>
+
+    {% if my_groups %}
+    <h5 class="fw-semibold mb-3">My Groups</h5>
+    <div class="row g-3 mb-4">
+        {% for group in my_groups %}
+        <div class="col-6 col-md-4">
+            <a href="{{ url_for('groups.detail', group_name=group.name) }}" class="text-decoration-none">
+                <div class="card border-0 rounded-4 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3"
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-people-fill text-primary fs-3"></i>
+                        </div>
+                        <h6 class="fw-semibold mb-1">{{ group.name }}</h6>
+                        <small class="text-muted">{{ group.member_count }} members</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if other_groups %}
+    <h5 class="fw-semibold mb-3">Discover Groups</h5>
+    <div class="row g-3">
+        {% for group in other_groups %}
+        <div class="col-6 col-md-4">
+            <a href="{{ url_for('groups.detail', group_name=group.name) }}" class="text-decoration-none">
+                <div class="card border-0 rounded-4 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3"
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-people text-secondary fs-3"></i>
+                        </div>
+                        <h6 class="fw-semibold mb-1">{{ group.name }}</h6>
+                        <small class="text-muted">{{ group.member_count }} members</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not my_groups and not other_groups %}
+    <div class="text-center py-5">
+        <i class="bi bi-people" style="font-size: 4rem; color: #ccc;"></i>
+        <h4 class="mt-3 text-muted">No groups yet</h4>
+        <p class="text-muted">Create the first group for farmers!</p>
+        <a href="{{ url_for('groups.create') }}" class="btn btn-primary rounded-pill px-4">Create Group</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

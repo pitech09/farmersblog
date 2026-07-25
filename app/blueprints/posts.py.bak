@@ -1,0 +1,133 @@
+import os
+import uuid
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app
+from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+from app.extensions import db
+from app.models import Post, Media, Comment, Group
+
+posts_bp = Blueprint('posts', __name__)
+
+
+def allowed_file(filename, allowed_extensions=None):
+    if allowed_extensions is None:
+        allowed_extensions = current_app.config['ALLOWED_EXTENSIONS']
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+
+def get_media_type(filename):
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext in current_app.config['ALLOWED_EXTENSIONS']:
+        return 'image'
+    if ext in current_app.config.get('ALLOWED_VIDEO_EXTENSIONS', {'mp4', 'webm', 'mov'}):
+        return 'video'
+    return None
+
+
+@posts_bp.route('/create', methods=['GET', 'POST'])
+@login_required
+def create():
+    groups = Group.query.filter(Group.members.any(id=current_user.id)).all()
+    preselected_group = request.args.get('group')
+
+    if request.method == 'POST':
+        caption = request.form.get('caption', '').strip()
+        group_id = request.form.get('group_id', type=int)
+
+        if not caption:
+            flash('Caption is required.', 'danger')
+            return render_template('posts/create.html', groups=groups, preselected_group=preselected_group)
+
+        files = request.files.getlist('media')
+        # Filter out empty filenames
+        files = [f for f in files if f.filename]
+
+        post = Post(
+            author_id=current_user.id,
+            caption=caption,
+            group_id=group_id if group_id else None
+        )
+        db.session.add(post)
+        db.session.flush()
+
+        for idx, file in enumerate(files):
+            if file.filename == '':
+                continue
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            allowed_exts = current_app.config['ALLOWED_EXTENSIONS'].union(
+                current_app.config.get('ALLOWED_VIDEO_EXTENSIONS', {'mp4', 'webm', 'mov'})
+            )
+            if ext not in allowed_exts:
+                flash(f'Invalid file type: .{ext}. Allowed: png, jpg, jpeg, gif, mp4, webm, mov', 'danger')
+                db.session.rollback()
+                return render_template('posts/create.html', groups=groups)
+
+            media_type = 'image' if ext in current_app.config['ALLOWED_EXTENSIONS'] else 'video'
+            unique_name = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+
+            # Save to posts subfolder
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'posts')
+            file.save(os.path.join(upload_path, unique_name))
+
+            media = Media(
+                post_id=post.id,
+                filename=unique_name,
+                media_type=media_type,
+                position=idx
+            )
+            db.session.add(media)
+
+        db.session.commit()
+        flash('Post created successfully!', 'success')
+        if group_id:
+            group = Group.query.get(group_id)
+            return redirect(url_for('groups.detail', group_name=group.name))
+        return redirect(url_for('main.index'))
+
+    return render_template('posts/create.html', groups=groups)
+
+
+@posts_bp.route('/<int:post_id>/like', methods=['POST'])
+@login_required
+def like(post_id):
+    post = Post.query.get_or_404(post_id)
+
+    if post.is_liked_by(current_user):
+        post.likes.remove(current_user)
+        db.session.commit()
+        liked = False
+    else:
+        post.likes.append(current_user)
+        db.session.commit()
+        liked = True
+
+    return jsonify({
+        'liked': liked,
+        'like_count': post.like_count
+    })
+
+
+@posts_bp.route('/<int:post_id>/comment', methods=['POST'])
+@login_required
+def comment(post_id):
+    post = Post.query.get_or_404(post_id)
+    text = request.form.get('text', '').strip()
+
+    if not text:
+        return jsonify({'error': 'Comment text is required.'}), 400
+
+    comment = Comment(
+        post_id=post.id,
+        author_id=current_user.id,
+        text=text
+    )
+    db.session.add(comment)
+    db.session.commit()
+
+    return jsonify({
+        'id': comment.id,
+        'text': comment.text,
+        'author': comment.author.username,
+        'created_at': comment.created_at.strftime('%b %d, %Y at %I:%M %p')
+    })

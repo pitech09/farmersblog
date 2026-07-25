@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ listing.title }} - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <div class="card shadow-sm rounded-4 border-0">
+        <div class="position-relative" style="max-height: 500px; overflow: hidden; background: #f8f9fa;">
+            <img src="{{ media_url(listing.image_filename) }}"
+                 class="w-100" alt="{{ listing.title }}"
+                 style="max-height: 500px; object-fit: contain;">
+            {% if listing.is_sold %}
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.4);">
+                <span class="badge bg-danger fs-4 px-4 py-2 rounded-pill">SOLD</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between mb-2">
+                <div>
+                    <h3 class="fw-bold mb-1">{{ listing.title }}</h3>
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill">{{ listing.category }}</span>
+                </div>
+                <h3 class="fw-bold text-success mb-0">{{ listing.price_display }}</h3>
+            </div>
+
+            {% if listing.location %}
+            <p class="text-muted mb-2"><i class="bi bi-geo-alt me-1"></i>{{ listing.location }}</p>
+            {% endif %}
+
+            <hr>
+            <p class="mb-3">{{ listing.description }}</p>
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <a href="{{ url_for('profile.public_profile', username=listing.seller.username) }}" class="text-decoration-none d-flex align-items-center gap-2">
+                    {% if listing.seller.avatar_filename %}
+                    <img src="{{ avatar_url(listing.seller.avatar_filename) }}"
+                         class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;" alt="Avatar">
+                    {% else %}
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="bi bi-person-fill text-primary"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <strong class="d-block">{{ listing.seller.username }}</strong>
+                        <small class="text-muted">Listed {{ listing.created_at.strftime('%b %d, %Y') }}</small>
+                    </div>
+                </a>
+            </div>
+
+            <div class="d-flex gap-2">
+                {% if current_user.is_authenticated and current_user.id == listing.seller_id %}
+                <form method="POST" action="{{ url_for('marketplace.mark_sold', listing_id=listing.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-outline-warning rounded-pill px-4">
+                        <i class="bi {% if listing.is_sold %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i>
+                        {% if listing.is_sold %}Mark Available{% else %}Mark as Sold{% endif %}
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('marketplace.delete', listing_id=listing.id) }}" class="d-inline"
+                      onsubmit="return confirm('Delete this listing permanently?')">
+                    <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </form>
+                {% elif current_user.is_authenticated %}
+                <a href="{{ url_for('messages.conversation', username=listing.seller.username) }}?body={{ 'Hi, I\'m interested in your listing: ' + listing.title | urlencode }}"
+                   class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-envelope me-1"></i>Contact Seller
+                </a>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-success rounded-pill px-4">
+                    <i class="bi bi-envelope me-1"></i>Login to Contact
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center my-4">
+        <a href="{{ url_for('marketplace.index') }}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-2"></i>Back to Marketplace
+        </a>
+    </div>
+</div>
+{% endblock %}

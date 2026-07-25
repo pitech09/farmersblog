@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Chat with {{ other_user.username }} - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <div class="card shadow-sm rounded-4 border-0">
+        <div class="card-header bg-white rounded-top-4 d-flex align-items-center py-3 px-4 border-0">
+            <a href="{{ url_for('messages.inbox') }}" class="btn btn-sm btn-outline-secondary rounded-pill me-3">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <a href="{{ url_for('profile.public_profile', username=other_user.username) }}" class="text-decoration-none d-flex align-items-center gap-2">
+                {% if other_user.avatar_filename %}
+                <img src="{{ avatar_url(other_user.avatar_filename) }}"
+                     class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" alt="Avatar">
+                {% else %}
+                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <i class="bi bi-person-fill text-primary"></i>
+                </div>
+                {% endif %}
+                <div>
+                    <h6 class="mb-0 fw-semibold">{{ other_user.username }}</h6>
+                </div>
+            </a>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="card-body p-4" style="min-height: 400px; max-height: 500px; overflow-y: auto;" id="chatMessages">
+            {% if messages %}
+                {% for msg in messages %}
+                <div class="d-flex mb-3 {% if msg.sender_id == current_user.id %}justify-content-end{% endif %}">
+                    <div class="{% if msg.sender_id == current_user.id %}bg-primary text-white{% else %}bg-light{% endif %} rounded-4 px-3 py-2"
+                         style="max-width: 75%;">
+                        <p class="mb-0">{{ msg.body }}</p>
+                        <small class="{% if msg.sender_id == current_user.id %}text-white-50{% else %}text-muted{% endif %} d-block text-end mt-1"
+                               style="font-size: 0.7rem;">
+                            {{ msg.timestamp.strftime('%I:%M %p') }}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center py-5" id="emptyChat">
+                <i class="bi bi-chat-dots" style="font-size: 3rem; color: #ccc;"></i>
+                <p class="text-muted mt-2">No messages yet. Say hello!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Message Input -->
+        <div class="card-footer bg-white rounded-bottom-4 border-0 p-3">
+            <form id="messageForm" class="d-flex gap-2">
+                <input type="text" id="messageInput" class="form-control rounded-pill bg-light border-0 py-2" placeholder="Type a message..." required autocomplete="off">
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const recipientUsername = '{{ other_user.username }}';
+    const currentUsername = '{{ current_user.username }}';
+    let lastMessageId = {{ messages[-1].id if messages else 0 }};
+
+    // Send message
+    document.getElementById('messageForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = document.getElementById('messageInput');
+        const body = input.value.trim();
+        if (!body) return;
+
+        fetch('{{ url_for("messages.send") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                recipient_username: recipientUsername,
+                body: body
+            })
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.success) {
+                appendMessage(data.body, data.timestamp, true);
+                input.value = '';
+                lastMessageId = data.id;
+            } else if (data.error) {
+                console.error(data.error);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error sending message:', error);
+        });
+    });
+
+    // Append message to chat
+    function appendMessage(body, timestamp, isSent) {
+        const chat = document.getElementById('chatMessages');
+        const empty = document.getElementById('emptyChat');
+        if (empty) empty.remove();
+
+        const div = document.createElement('div');
+        div.className = 'd-flex mb-3 ' + (isSent ? 'justify-content-end' : '');
+        div.innerHTML = '<div class="' + (isSent ? 'bg-primary text-white' : 'bg-light') + ' rounded-4 px-3 py-2" style="max-width: 75%;">' +
+            '<p class="mb-0">' + body + '</p>' +
+            '<small class="' + (isSent ? 'text-white-50' : 'text-muted') + ' d-block text-end mt-1" style="font-size: 0.7rem;">' + timestamp + '</small>' +
+            '</div>';
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    // Poll for new messages every 8 seconds
+    setInterval(function() {
+        fetch('{{ url_for("messages.poll_messages", username=other_user.username) }}?since=' + lastMessageId, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(function(msg) {
+                    appendMessage(msg.body, msg.timestamp, false);
+                    lastMessageId = msg.id;
+                });
+            }
+        })
+        .catch(function(error) {
+            console.error('Error polling messages:', error);
+        });
+    }, 8000);
+
+    // Scroll to bottom on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const chat = document.getElementById('chatMessages');
+        chat.scrollTop = chat.scrollHeight;
+    });
+</script>
+{% endblock %}
