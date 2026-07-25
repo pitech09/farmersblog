@@ -49,8 +49,8 @@ class DevConfig(BaseConfig):
     """Development configuration with local storage."""
     DEBUG = True
     
-    # SQLite database in instance folder
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///farmersblog_dev.db')
+    # PostgreSQL database (same as production)
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/farmersblog_dev')
     
     # Local upload folder
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'app/instance/uploads')

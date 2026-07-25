@@ -129,8 +129,5 @@ def create_app(config_class=None):
         return response
 
     # Create tables
-    with app.app_context():
-        from app import models
-        db.create_all()
 
     return app

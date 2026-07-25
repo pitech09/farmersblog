@@ -9,6 +9,8 @@ def app():
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
     app.config['SERVER_NAME'] = 'localhost'
+    # Use SQLite in-memory for tests (isolated, fast, no external DB required)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app
 
 @pytest.fixture

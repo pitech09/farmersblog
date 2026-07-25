@@ -2,9 +2,9 @@
 
 A full-stack social network for farmers and gardening enthusiasts. Share photos and videos, follow other farmers, join groups, and send direct messages.
 
-Built with **Flask**, **Bootstrap 5**, and **SQLite** — featuring a clean, modern UI blending Apple's minimalism with Facebook's social accent and card-based layout.
+Built with **Flask**, **Bootstrap 5**, and **PostgreSQL** — featuring a clean, modern UI blending Apple's minimalism with Facebook's social accent and card-based layout.
 
-Supports both development (SQLite, local storage) and production (PostgreSQL, Cloudinary, Redis) deployments.
+Supports both development (PostgreSQL, local storage) and production (PostgreSQL, Cloudinary, Redis) deployments.
 
 ## Features
 
@@ -50,7 +50,7 @@ Supports both development (SQLite, local storage) and production (PostgreSQL, Cl
 |-----------|-----------|
 | Backend | Python 3, Flask |
 | ORM | SQLAlchemy |
-| Database | SQLite (development) / PostgreSQL (production) |
+| Database | PostgreSQL (both development and production) |
 | Frontend | Jinja2, Bootstrap 5, vanilla JavaScript |
 | Auth | Flask-Login (session-based) |
 | Media | Local filesystem (dev) / Cloudinary (prod) |
@@ -141,7 +141,7 @@ cp .env.example .env
 Edit `.env` to set:
 - `SECRET_KEY` — generate with `python -c "import secrets; print(secrets.token_hex(32))"`
 - `FLASK_ENV=development` (default, for local development)
-- `DATABASE_URL=sqlite:///farmersblog_dev.db` (default, works out of the box)
+- `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/farmersblog_dev` (default, works out of the box with PostgreSQL running locally)
 
 ### 5. Run the application
 
