@@ -74,7 +74,7 @@ def create():
         # If posting to a group, verify membership
         if group_id:
             group = Group.query.get_or_404(group_id)
-            if not group.has_member(current_user):
+            if not group.is_member(current_user):
                 flash('You are not a member of this group.', 'danger')
                 return redirect(url_for('main.index'))
 
@@ -264,7 +264,7 @@ def edit(post_id):
         group_id = form.group_id.data or None
         if group_id:
             group = Group.query.get_or_404(group_id)
-            if not group.has_member(current_user):
+            if not group.is_member(current_user):
                 flash('You are not a member of this group.', 'danger')
                 return redirect(url_for('main.index'))
         post.group_id = group_id if group_id else None

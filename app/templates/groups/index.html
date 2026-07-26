@@ -36,7 +36,7 @@
                                 <a href="{{ url_for('groups.detail', group_name=group.name) }}" class="text-decoration-none">{{ group.name }}</a>
                             </h6>
                             <small class="text-muted text-truncate d-block">{{ group.description or 'No description' }}</small>
-                            <small class="text-muted">{{ group.member_count }} members · {{ group.post_count }} posts</small>
+                            <small class="text-muted"><span class="member-count">{{ group.member_count }}</span> members · {{ group.post_count }} posts</small>
                         </div>
                     </div>
                     {% if current_user.is_authenticated %}

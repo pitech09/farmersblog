@@ -52,7 +52,7 @@
                                     </div>
                                     <div class="flex-grow-1 min-w-0">
                                         <p class="mb-0 small text-break">{{ n.message }}</p>
-                                        <small class="text-muted" style="font-size: 0.7rem;">{{ n.created_at.strftime('%b %d, %I:%M %p') }}</small>
+                                        <small class="text-muted local-time" style="font-size: 0.7rem;" data-utc="{{ n.created_at.isoformat() }}">{{ n.created_at.strftime('%b %d, %I:%M %p') }}</small>
                                     </div>
                                 </a>
                             </li>

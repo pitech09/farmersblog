@@ -19,7 +19,7 @@
                     <div class="d-flex align-items-center gap-3 small text-muted">
                         <span><i class="bi bi-people me-1"></i><strong id="memberCount">{{ group.member_count }}</strong> members</span>
                         <span><i class="bi bi-file-text me-1"></i>{{ group.post_count }} posts</span>
-                        <span>Created {{ group.created_at.strftime('%b %Y') }}</span>
+                        <span>Created <small class="local-time" data-utc="{{ group.created_at.isoformat() }}">{{ group.created_at.strftime('%b %Y') }}</small></span>
                     </div>
                 </div>
                 {% if current_user.is_authenticated %}

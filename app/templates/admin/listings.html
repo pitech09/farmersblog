@@ -79,7 +79,7 @@
                             <span class="badge bg-primary rounded-pill">Active</span>
                             {% endif %}
                         </td>
-                        <td class="text-muted small">{{ listing.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-muted small"><span class="local-time" data-utc="{{ listing.created_at.isoformat() }}">{{ listing.created_at.strftime('%b %d, %Y') }}</span></td>
                         <td class="pe-4 text-end">
                             <div class="d-flex gap-2 justify-content-end">
                                 <form method="POST" action="{{ url_for('admin.toggle_listing_sold', listing_id=listing.id) }}" class="d-inline">

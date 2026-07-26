@@ -71,7 +71,7 @@
                         </td>
                         <td>{{ group.member_count }}</td>
                         <td>{{ group.post_count }}</td>
-                        <td class="text-muted small">{{ group.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-muted small"><span class="local-time" data-utc="{{ group.created_at.isoformat() }}">{{ group.created_at.strftime('%b %d, %Y') }}</span></td>
                         <td class="pe-4 text-end">
                             <div class="d-flex gap-2 justify-content-end">
                                 <a href="{{ url_for('admin.group_members', group_id=group.id) }}" class="btn btn-sm btn-outline-primary rounded-pill">

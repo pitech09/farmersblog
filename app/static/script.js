@@ -349,8 +349,13 @@ function toggleFollow(button) {
 function toggleGroupJoin(button) {
     const groupName = button.dataset.groupName;
     const icon = button.querySelector('i');
-    const textSpan = document.getElementById('joinText');
-    const countSpan = document.getElementById('memberCount');
+    // Try to find the text span within the button first, fall back to global #joinText
+    let textSpan = button.querySelector('span');
+    if (!textSpan) textSpan = document.getElementById('joinText');
+    // Try to find the member count in the same card, fall back to global #memberCount
+    const card = button.closest('.card');
+    let countSpan = card ? card.querySelector('.member-count') : null;
+    if (!countSpan) countSpan = document.getElementById('memberCount');
 
     fetch('/groups/' + encodeURIComponent(groupName) + '/join', {
         method: 'POST',
@@ -363,12 +368,12 @@ function toggleGroupJoin(button) {
     .then(function (data) {
         if (data.joined) {
             icon.className = 'bi bi-person-check me-1';
-            textSpan.textContent = 'Joined';
-            button.className = 'btn btn-outline-secondary rounded-pill px-4';
+            if (textSpan) textSpan.textContent = 'Leave';
+            button.className = 'btn btn-outline-secondary rounded-pill px-3 py-2 flex-shrink-0 ms-2';
         } else {
             icon.className = 'bi bi-person-plus me-1';
-            textSpan.textContent = 'Join';
-            button.className = 'btn btn-primary rounded-pill px-4';
+            if (textSpan) textSpan.textContent = 'Join';
+            button.className = 'btn btn-primary rounded-pill px-3 py-2 flex-shrink-0 ms-2';
         }
         if (countSpan) {
             countSpan.textContent = data.member_count;
@@ -427,11 +432,12 @@ function convertLocalTimes() {
     elements.forEach(function(el) {
         const utc = el.getAttribute('data-utc');
         if (!utc) return;
-        const date = new Date(utc);
+        // Append 'Z' to treat the ISO string as UTC
+        const date = new Date(utc + 'Z');
         if (isNaN(date.getTime())) return;
         let formatted;
         try {
-            formatted = date.toLocaleString('en-US', {
+            formatted = date.toLocaleString(undefined, {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',

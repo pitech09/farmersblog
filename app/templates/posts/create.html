@@ -3,21 +3,20 @@
 
 {% block extra_js %}
 <script>
-let captionEditor;
 ClassicEditor
     .create(document.querySelector('#caption'), {
         toolbar: ['bold', 'italic', 'bulletedList', 'numberedList', 'undo', 'redo'],
         placeholder: 'Write your caption...'
     })
-    .then(editor => { captionEditor = editor; })
+    .then(editor => {
+        // Automatically sync CKEditor content back to the textarea on every change
+        editor.model.document.on('change:data', () => {
+            editor.updateSourceElement();
+        });
+    })
     .catch(error => console.error(error));
 
-// Sync CKEditor content back to the textarea before form submission
-document.querySelector('form').addEventListener('submit', function() {
-    if (captionEditor) {
-        document.querySelector('#caption').value = captionEditor.getData();
-    }
-});
+// No custom submit handler needed — updateSourceElement() keeps the textarea in sync
 </script>
 {% endblock %}
 

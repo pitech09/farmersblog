@@ -37,7 +37,7 @@
                         <td class="text-muted small">
                             {% set membership = group.members.filter(group_members.c.user_id == member.id).first() %}
                             {% if membership %}
-                                {{ membership.joined_at.strftime('%b %d, %Y') if membership.joined_at else '—' }}
+                                <span class="local-time" data-utc="{{ membership.joined_at.isoformat() if membership.joined_at else '' }}">{{ membership.joined_at.strftime('%b %d, %Y') if membership.joined_at else '—' }}</span>
                             {% else %}
                                 —
                             {% endif %}

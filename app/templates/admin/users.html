@@ -79,7 +79,7 @@
                             </a>
                         </td>
                         <td class="text-muted">{{ user.email }}</td>
-                        <td class="text-muted small">{{ user.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-muted small"><span class="local-time" data-utc="{{ user.created_at.isoformat() }}">{{ user.created_at.strftime('%b %d, %Y') }}</span></td>
                         <td>
                             {% if user.is_admin %}
                             <span class="badge bg-success rounded-pill">Yes</span>

@@ -88,7 +88,7 @@
                             <span class="text-muted small">—</span>
                             {% endif %}
                         </td>
-                        <td class="text-muted small">{{ post.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-muted small"><span class="local-time" data-utc="{{ post.created_at.isoformat() }}">{{ post.created_at.strftime('%b %d, %Y') }}</span></td>
                         <td>{{ post.like_count }}</td>
                         <td>{{ post.comment_count }}</td>
                         <td class="pe-4 text-end">
