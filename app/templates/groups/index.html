@@ -5,61 +5,84 @@
 <div class="container" style="max-width: 680px;">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h4 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Groups</h4>
+        {% if current_user.is_authenticated %}
         <a href="{{ url_for('groups.create') }}" class="btn btn-primary btn-sm rounded-pill px-3">
             <i class="bi bi-plus-lg me-1"></i>Create Group
         </a>
+        {% endif %}
     </div>
 
-    {% if my_groups %}
-    <h5 class="fw-semibold mb-3">My Groups</h5>
-    <div class="row g-3 mb-4">
-        {% for group in my_groups %}
-        <div class="col-6 col-md-4">
-            <a href="{{ url_for('groups.detail', group_name=group.name) }}" class="text-decoration-none">
-                <div class="card border-0 rounded-4 shadow-sm h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3"
-                             style="width: 60px; height: 60px;">
-                            <i class="bi bi-people-fill text-primary fs-3"></i>
-                        </div>
-                        <h6 class="fw-semibold mb-1">{{ group.name }}</h6>
-                        <small class="text-muted">{{ group.member_count }} members</small>
-                    </div>
-                </div>
-            </a>
+    <form method="GET" action="{{ url_for('groups.index') }}" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control bg-light border-0 rounded-pill-start py-2" placeholder="Search groups by name..." value="{{ query or '' }}">
+            <button type="submit" class="btn btn-outline-primary rounded-pill-end px-4">
+                <i class="bi bi-search"></i>
+            </button>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+    </form>
 
-    {% if other_groups %}
-    <h5 class="fw-semibold mb-3">Discover Groups</h5>
+    {% if groups %}
     <div class="row g-3">
-        {% for group in other_groups %}
-        <div class="col-6 col-md-4">
-            <a href="{{ url_for('groups.detail', group_name=group.name) }}" class="text-decoration-none">
-                <div class="card border-0 rounded-4 shadow-sm h-100">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3"
-                             style="width: 60px; height: 60px;">
-                            <i class="bi bi-people text-secondary fs-3"></i>
+        {% for group in groups %}
+        <div class="col-12">
+            <div class="card border-0 rounded-4 shadow-sm h-100">
+                <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3 flex-grow-1 min-w-0">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">
+                            <i class="bi bi-people-fill text-primary fs-4"></i>
                         </div>
-                        <h6 class="fw-semibold mb-1">{{ group.name }}</h6>
-                        <small class="text-muted">{{ group.member_count }} members</small>
+                        <div class="min-w-0">
+                            <h6 class="fw-semibold mb-0 text-truncate">
+                                <a href="{{ url_for('groups.detail', group_name=group.name) }}" class="text-decoration-none">{{ group.name }}</a>
+                            </h6>
+                            <small class="text-muted text-truncate d-block">{{ group.description or 'No description' }}</small>
+                            <small class="text-muted">{{ group.member_count }} members · {{ group.post_count }} posts</small>
+                        </div>
                     </div>
+                    {% if current_user.is_authenticated %}
+                        {% if user_membership.get(group.id) %}
+                        <button class="btn btn-outline-secondary rounded-pill px-3 py-2 flex-shrink-0 ms-2" data-group-name="{{ group.name }}" onclick="toggleGroupJoin(this)">
+                            <i class="bi bi-person-check me-1"></i>Leave
+                        </button>
+                        {% else %}
+                        <button class="btn btn-primary rounded-pill px-3 py-2 flex-shrink-0 ms-2" data-group-name="{{ group.name }}" onclick="toggleGroupJoin(this)">
+                            <i class="bi bi-person-plus me-1"></i>Join
+                        </button>
+                        {% endif %}
+                    {% endif %}
                 </div>
-            </a>
+            </div>
         </div>
         {% endfor %}
     </div>
-    {% endif %}
 
-    {% if not my_groups and not other_groups %}
+    {% if pagination.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('groups.index', page=pagination.prev_num, q=query) }}">&laquo;</a></li>
+            {% endif %}
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <li class="page-item active"><a class="page-link" href="{{ url_for('groups.index', page=page_num, q=query) }}">{{ page_num }}</a></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('groups.index', page=page_num, q=query) }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endfor %}
+            {% if pagination.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('groups.index', page=pagination.next_num, q=query) }}">&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
     <div class="text-center py-5">
-        <i class="bi bi-people" style="font-size: 4rem; color: #ccc;"></i>
-        <h4 class="mt-3 text-muted">No groups yet</h4>
-        <p class="text-muted">Create the first group for farmers!</p>
-        <a href="{{ url_for('groups.create') }}" class="btn btn-primary rounded-pill px-4">Create Group</a>
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="text-muted mt-2">No groups found.</p>
     </div>
     {% endif %}
 </div>

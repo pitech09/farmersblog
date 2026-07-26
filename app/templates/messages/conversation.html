@@ -31,10 +31,9 @@
                     <div class="{% if msg.sender_id == current_user.id %}bg-primary text-white{% else %}bg-light{% endif %} rounded-4 px-3 py-2"
                          style="max-width: 75%;">
                         <p class="mb-0">{{ msg.body|replace('\n', '<br>')|safe }}</p>
-                        <small class="{% if msg.sender_id == current_user.id %}text-white-50{% else %}text-muted{% endif %} d-block text-end mt-1"
-                               style="font-size: 0.7rem;">
-                            {{ msg.timestamp.strftime('%I:%M %p') }}
-                        </small>
+                        <small class="{% if msg.sender_id == current_user.id %}text-white-50{% else %}text-muted{% endif %} d-block text-end mt-1 local-time"
+                               style="font-size: 0.7rem;"
+                               data-utc="{{ msg.timestamp.isoformat() }}"></small>
                     </div>
                 </div>
                 {% endfor %}

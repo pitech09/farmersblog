@@ -420,6 +420,36 @@ function showShareToast() {
 }
 
 // ============================================================
+// Convert UTC timestamps to local time
+// ============================================================
+function convertLocalTimes() {
+    const elements = document.querySelectorAll('.local-time');
+    elements.forEach(function(el) {
+        const utc = el.getAttribute('data-utc');
+        if (!utc) return;
+        const date = new Date(utc);
+        if (isNaN(date.getTime())) return;
+        let formatted;
+        try {
+            formatted = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch (e) {
+            formatted = date.toLocaleString();
+        }
+        el.textContent = formatted;
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    convertLocalTimes();
+});
+// ============================================================
 // Notification sound polling (Web Audio API)
 // ============================================================
 function playNotificationSound() {

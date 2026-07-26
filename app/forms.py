@@ -69,8 +69,28 @@ class ProfileForm(FlaskForm):
     ])
     avatar = FileField('Profile Picture', validators=[Optional()])
 
+
+class AccountForm(FlaskForm):
+    email = StringField('Email', validators=[
+        DataRequired(),
+        Email(),
+        Length(max=120),
+    ])
+    current_password = PasswordField('Current Password', validators=[
+        Optional(),
+        Length(min=6)
+    ])
+    new_password = PasswordField('New Password', validators=[
+        Optional(),
+        Length(min=6, message='Password must be at least 6 characters.')
+    ])
+    confirm_password = PasswordField('Confirm New Password', validators=[
+        Optional(),
+        EqualTo('new_password', message='Passwords must match.')
+    ])
+
     def __init__(self, current_user_id=None, *args, **kwargs):
-        super(ProfileForm, self).__init__(*args, **kwargs)
+        super(AccountForm, self).__init__(*args, **kwargs)
         self.current_user_id = current_user_id
 
     def validate_username(self, username):

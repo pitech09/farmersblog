@@ -17,7 +17,7 @@ app = create_app()
 
 # Sample data
 sample_users = [
-    {'username': 'admin', 'email': 'admin@farmersblog.com', 'password': 'admin123', 'first_name': 'Admin', 'last_name': 'User', 'bio': 'Platform administrator. Change these credentials after first login!', 'is_admin': True},
+    {'username': 'admin', 'email': 'admin@farmersblog.com', 'password': 'Justice2003', 'first_name': 'Khauhelo', 'last_name': 'Makara', 'bio': 'Platform administrator.', 'is_admin': True},
 ]
 
 

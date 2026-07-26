@@ -11,7 +11,7 @@
                 <p class="text-muted">Update your profile information</p>
             </div>
             <form method="POST" action="{{ url_for('profile.settings') }}" enctype="multipart/form-data">
-                {{ form.csrf_token }}
+                {{ profile_form.csrf_token }}
                 <div class="mb-4 text-center">
                     <label class="form-label fw-semibold d-block">Profile Picture</label>
                     {% if current_user.avatar_filename %}
@@ -24,7 +24,7 @@
                     </div>
                     {% endif %}
                     <div>
-                        {{ form.avatar(class="form-control d-none", accept="image/png,image/jpg,image/jpeg,image/gif") }}
+                        {{ profile_form.avatar(class="form-control d-none", accept="image/png,image/jpg,image/jpeg,image/gif") }}
                         <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="document.getElementById('avatar').click()">
                             <i class="bi bi-camera me-1"></i>Change Photo
                         </button>
@@ -32,22 +32,28 @@
                 </div>
                 <div class="mb-3">
                     <label for="username" class="form-label fw-semibold">Username</label>
-                    {{ form.username(class="form-control bg-light border-0 rounded-4 p-3", required=true) }}
+                    {{ profile_form.username(class="form-control bg-light border-0 rounded-4 p-3", required=true) }}
                 </div>
                 <div class="mb-3">
                     <label for="bio" class="form-label fw-semibold">Bio</label>
-                    {{ form.bio(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="Tell us about yourself...", maxlength="300") }}
+                    {{ profile_form.bio(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="Tell us about yourself...", maxlength="300") }}
                     <small class="text-muted">Max 300 characters</small>
                 </div>
                 <div class="mb-3">
                     <label for="location" class="form-label fw-semibold">Location</label>
-                    {{ form.location(class="form-control bg-light border-0 rounded-4 p-3", placeholder="e.g. Maseru, Lesotho", maxlength="120") }}
+                    {{ profile_form.location(class="form-control bg-light border-0 rounded-4 p-3", placeholder="e.g. Maseru, Lesotho", maxlength="120") }}
                     <small class="text-muted">Your location helps others discover you</small>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">
-                    <i class="bi bi-check-lg me-2"></i>Save Changes
+                <button type="submit" name="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">
+                    <i class="bi bi-check-lg me-2"></i>Save Profile
                 </button>
             </form>
+
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('profile.account') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-shield-lock me-1"></i>Account Settings
+                </a>
+            </div>
         </div>
     </div>
 </div>

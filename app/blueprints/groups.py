@@ -8,13 +8,32 @@ groups_bp = Blueprint('groups', __name__)
 
 
 @groups_bp.route('/')
-@login_required
 def index():
-    # Groups the user is a member of
-    my_groups = Group.query.filter(Group.members.any(id=current_user.id)).all()
-    # Other groups
-    other_groups = Group.query.filter(~Group.members.any(id=current_user.id)).all()
-    return render_template('groups/index.html', my_groups=my_groups, other_groups=other_groups)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    query = request.args.get('q', '').strip()
+
+    groups_query = Group.query
+    if query:
+        groups_query = groups_query.filter(Group.name.ilike(f'%{query}%'))
+
+    pagination = groups_query.order_by(Group.name.asc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    groups = pagination.items
+
+    user_membership = {}
+    if current_user.is_authenticated:
+        for g in current_user.groups_joined.all():
+            user_membership[g.id] = True
+
+    return render_template(
+        'groups/index.html',
+        groups=groups,
+        pagination=pagination,
+        user_membership=user_membership,
+        query=query
+    )
 
 
 @groups_bp.route('/create', methods=['GET', 'POST'])
