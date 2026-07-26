@@ -28,6 +28,10 @@ class BaseConfig:
     SESSION_COOKIE_HTTPONLY = True  # Prevent JS access
     SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
     
+    # Session expires after 5 minutes of inactivity
+    PERMANENT_SESSION_LIFETIME = 300  # 5 minutes
+    SESSION_REFRESH_EACH_REQUEST = True
+    
     # CSRF Protection
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = 3600  # 1 hour

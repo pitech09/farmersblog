@@ -18,6 +18,7 @@ def login():
         password = form.password.data
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
+            session.permanent = True  # Enable 5-minute inactivity timeout
             login_user(user)
             next_page = request.args.get('next')
             # Validate next parameter to prevent open redirect
