@@ -63,6 +63,10 @@ class ProfileForm(FlaskForm):
         Optional(),
         Length(max=300, message='Bio must be under 300 characters.')
     ])
+    location = StringField('Location', validators=[
+        Optional(),
+        Length(max=120, message='Location must be under 120 characters.')
+    ])
     avatar = FileField('Profile Picture', validators=[Optional()])
 
     def __init__(self, current_user_id=None, *args, **kwargs):

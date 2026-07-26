@@ -48,6 +48,7 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     avatar_filename = db.Column(db.String(255), default=None)
     bio = db.Column(db.Text, default='')
+    location = db.Column(db.String(120), default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     posts = db.relationship('Post', backref='author', lazy='dynamic', cascade='all, delete-orphan')

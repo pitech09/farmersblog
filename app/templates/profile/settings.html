@@ -39,6 +39,11 @@
                     {{ form.bio(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="Tell us about yourself...", maxlength="300") }}
                     <small class="text-muted">Max 300 characters</small>
                 </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label fw-semibold">Location</label>
+                    {{ form.location(class="form-control bg-light border-0 rounded-4 p-3", placeholder="e.g. Maseru, Lesotho", maxlength="120") }}
+                    <small class="text-muted">Your location helps others discover you</small>
+                </div>
                 <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">
                     <i class="bi bi-check-lg me-2"></i>Save Changes
                 </button>

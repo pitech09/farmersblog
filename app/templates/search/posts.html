@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Search Posts - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <!-- Search Header -->
+    <div class="card shadow-sm rounded-4 border-0 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-search me-2" style="color: #1877F2;"></i>Search Posts
+            </h5>
+            <form action="{{ url_for('search.search_posts') }}" method="GET" class="d-flex gap-2">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control bg-light border-0 rounded-4 py-2"
+                           placeholder="Search by caption..." value="{{ query }}" autofocus>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 ms-2">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if query %}
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-semibold mb-0">
+            Results for "<span class="text-primary">{{ query }}</span>"
+        </h6>
+        <small class="text-muted">{{ pagination.total }} post{% if pagination.total != 1 %}s{% endif %} found</small>
+    </div>
+    {% endif %}
+
+    {% if posts %}
+        {% for post in posts %}
+            {% include '_post_card.html' %}
+        {% endfor %}
+
+        <!-- Pagination -->
+        <nav aria-label="Search results pagination" class="my-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link rounded-pill" href="{{ url_for('search.search_posts', q=query, page=pagination.prev_num) }}">Previous</a>
+                </li>
+                {% endif %}
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link rounded-pill" href="{{ url_for('search.search_posts', q=query, page=pagination.next_num) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+            <h5 class="fw-semibold mt-3">No posts found</h5>
+            {% if query %}
+            <p class="text-muted">No posts match "{{ query }}". Try different keywords.</p>
+            {% else %}
+            <p class="text-muted">Enter a search term above to find posts.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

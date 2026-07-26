@@ -481,6 +481,74 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
+/* === Rich-Text Caption Styling === */
+/* Ensure CKEditor-generated HTML renders properly in all caption contexts */
+.card-text,
+.post-caption,
+.caption-full,
+.caption-preview {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+.card-text ul,
+.card-text ol,
+.post-caption ul,
+.post-caption ol,
+.caption-full ul,
+.caption-full ol,
+.caption-preview ul,
+.caption-preview ol {
+    padding-left: 1.2rem;
+    margin: 0.5rem 0;
+}
+
+.card-text li,
+.post-caption li,
+.caption-full li,
+.caption-preview li {
+    margin-bottom: 0.15rem;
+}
+
+.card-text p,
+.post-caption p,
+.caption-full p,
+.caption-preview p {
+    margin: 0.5rem 0;
+}
+
+.card-text a,
+.post-caption a,
+.caption-full a,
+.caption-preview a {
+    color: var(--twitter-blue);
+    text-decoration: none;
+}
+
+.card-text a,
+.post-caption a,
+.caption-full a,
+.caption-preview a {
+    color: var(--twitter-blue);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.card-text a:hover,
+.post-caption a:hover,
+.caption-full a:hover,
+.caption-preview a:hover {
+    text-decoration: underline;
+}
+
+/* Ensure the post detail caption has proper spacing */
+.card-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
 /* === Hashtags & Handles === */
 .hashtag,
 .handle {

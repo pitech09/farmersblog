@@ -79,7 +79,7 @@
                             </a>
                         </td>
                         <td class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            {{ post.caption_preview }}
+                            {{ post.caption_preview | safe }}
                         </td>
                         <td>
                             {% if post.group %}

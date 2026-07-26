@@ -84,6 +84,7 @@ def settings():
     if form.validate_on_submit():
         current_user.username = form.username.data.strip()
         current_user.bio = (form.bio.data or '')[:300]
+        current_user.location = (form.location.data or '')[:120]
 
         # Handle avatar upload
         file = form.avatar.data
@@ -115,5 +116,6 @@ def settings():
     if request.method == 'GET':
         form.username.data = current_user.username
         form.bio.data = current_user.bio or ''
+        form.location.data = current_user.location or ''
 
     return render_template('profile/settings.html', form=form)

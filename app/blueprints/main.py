@@ -41,7 +41,6 @@ def index():
 
 
 @main_bp.route('/post/<int:post_id>')
-@cache.cached(timeout=300)
 def post_detail(post_id):
     post = Post.query.get_or_404(post_id)
     post.user_has_liked = post.is_liked_by(current_user)

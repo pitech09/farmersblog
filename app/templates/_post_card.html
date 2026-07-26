@@ -61,12 +61,12 @@
                 <span class="action-icon">
                     <i class="bi {% if post.user_has_liked %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
                 </span>
-                <span class="action-count">{{ post.like_count }}</span>
+                <span class="action-count like-count">{{ post.like_count }}</span>
             </button>
             {% else %}
             <button class="action-btn" onclick="window.location.href='{{ url_for('auth.login') }}'">
                 <span class="action-icon"><i class="bi bi-heart"></i></span>
-                <span class="action-count">{{ post.like_count }}</span>
+                <span class="action-count like-count">{{ post.like_count }}</span>
             </button>
             {% endif %}
             <a href="{{ url_for('main.post_detail', post_id=post.id) }}" class="action-btn">

@@ -16,6 +16,11 @@
             </div>
             {% endif %}
             <h3 class="fw-bold mb-1">{{ profile_user.username }}</h3>
+            {% if profile_user.location %}
+            <p class="text-muted mb-1">
+                <i class="bi bi-geo-alt me-1"></i>{{ profile_user.location }}
+            </p>
+            {% endif %}
             <p class="text-muted mb-2">Member since {{ profile_user.created_at.strftime('%B %Y') }}</p>
             {% if profile_user.bio %}
             <p class="mb-3">{{ profile_user.bio|replace('\n', '<br>')|safe }}</p>

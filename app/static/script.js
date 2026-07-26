@@ -47,14 +47,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Comment form submission
-    const commentForm = document.getElementById('comment-form');
-    if (commentForm) {
-        commentForm.addEventListener('submit', function (e) {
+    // Comment form submission (delegated to handle dynamic forms)
+    document.addEventListener('submit', function (e) {
+        if (e.target && e.target.id === 'comment-form') {
             e.preventDefault();
-            submitComment(this);
-        });
-    }
+            submitComment(e.target);
+        }
+    });
 });
 
 // Toggle read more for long captions (delegated event listener)
@@ -86,12 +85,37 @@ function clearMediaPreview() {
     document.getElementById('previewContainer').innerHTML = '';
 }
 
-// Toggle like (AJAX)
+// ============================================================
+// OPTIMISTIC UI: Toggle like (AJAX) with immediate UI update
+// ============================================================
 function toggleLike(button) {
     const postId = button.dataset.postId;
     const icon = button.querySelector('i');
     const countSpan = button.querySelector('.like-count');
 
+    // Cache the original state before making changes
+    const wasLiked = icon.classList.contains('bi-heart-fill');
+    const originalCount = parseInt(countSpan.textContent) || 0;
+
+    // --- OPTIMISTIC UPDATE: Apply changes immediately ---
+    if (wasLiked) {
+        icon.className = 'bi bi-heart';
+        button.classList.remove('liked');
+        countSpan.textContent = originalCount - 1;
+    } else {
+        icon.className = 'bi bi-heart-fill';
+        button.classList.add('liked');
+        countSpan.textContent = originalCount + 1;
+    }
+
+    // Add a small scale pulse animation
+    button.style.transition = 'transform 0.15s ease';
+    button.style.transform = 'scale(1.3)';
+    setTimeout(function() {
+        button.style.transform = 'scale(1)';
+    }, 150);
+
+    // --- SEND AJAX REQUEST ---
     fetch('/posts/' + postId + '/like', {
         method: 'POST',
         headers: {
@@ -104,10 +128,14 @@ function toggleLike(button) {
             window.location.href = response.url;
             return;
         }
+        if (!response.ok) {
+            throw new Error('Server returned ' + response.status);
+        }
         return response.json();
     })
     .then(function (data) {
         if (!data) return;
+        // Update with server-confirmed values
         if (data.liked) {
             icon.className = 'bi bi-heart-fill';
             button.classList.add('liked');
@@ -119,15 +147,170 @@ function toggleLike(button) {
     })
     .catch(function (error) {
         console.error('Error toggling like:', error);
-        window.location.reload();
+        // --- REVERT on failure ---
+        if (wasLiked) {
+            icon.className = 'bi bi-heart-fill';
+            button.classList.add('liked');
+            countSpan.textContent = originalCount;
+        } else {
+            icon.className = 'bi bi-heart';
+            button.classList.remove('liked');
+            countSpan.textContent = originalCount;
+        }
+        showFlashMessage('Failed to like. Try again.', 'danger');
     });
+}
+
+// ============================================================
+// OPTIMISTIC UI: Submit comment (AJAX) with immediate append
+// ============================================================
+function submitComment(form) {
+    const postId = form.dataset.postId;
+    const input = document.getElementById('comment-input');
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    // Get current username from the page (fallback to 'You')
+    const currentUsername = document.querySelector('meta[name="current-username"]');
+    const username = currentUsername ? currentUsername.getAttribute('content') : 'You';
+
+    // --- OPTIMISTIC UPDATE: Append comment immediately ---
+    const commentList = document.getElementById('comment-list');
+    const tempId = 'temp-' + Date.now();
+    const optimisticComment = document.createElement('div');
+    optimisticComment.className = 'd-flex gap-3 mb-3 comment-item optimistic-comment';
+    optimisticComment.id = tempId;
+    optimisticComment.style.opacity = '0.6';
+    optimisticComment.innerHTML =
+        '<div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">' +
+            '<i class="bi bi-person-fill text-secondary small"></i>' +
+        '</div>' +
+        '<div class="bg-light rounded-4 px-3 py-2 flex-grow-1">' +
+            '<strong class="d-block small">' + escapeHtml(username) + '</strong>' +
+            '<p class="mb-0">' + escapeHtml(text) + '</p>' +
+            '<small class="text-muted">Sending...</small>' +
+        '</div>';
+    commentList.appendChild(optimisticComment);
+
+    // Clear input immediately
+    input.value = '';
+
+    // Update comment count optimistically
+    const commentHeader = document.querySelector('h5.fw-semibold.mb-3');
+    let originalCount = 0;
+    if (commentHeader) {
+        var match = commentHeader.textContent.match(/\((\d+)\)/);
+        originalCount = match ? parseInt(match[1]) : 0;
+        commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + (originalCount + 1) + ')';
+    }
+
+    // --- SEND AJAX REQUEST ---
+    var formData = new FormData();
+    formData.append('text', text);
+
+    fetch('/posts/' + postId + '/comment', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(function (response) {
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
+        if (!response.ok) {
+            throw new Error('Server returned ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function (data) {
+        if (!data) return;
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        // --- SUCCESS: Replace optimistic comment with real one ---
+        const tempComment = document.getElementById(tempId);
+        if (tempComment) {
+            tempComment.style.opacity = '1';
+            tempComment.innerHTML =
+                '<div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">' +
+                    '<i class="bi bi-person-fill text-secondary small"></i>' +
+                '</div>' +
+                '<div class="bg-light rounded-4 px-3 py-2 flex-grow-1">' +
+                    '<strong class="d-block small">' + escapeHtml(data.author) + '</strong>' +
+                    '<p class="mb-0">' + escapeHtml(data.text) + '</p>' +
+                    '<small class="text-muted">' + data.created_at + '</small>' +
+                '</div>';
+            tempComment.removeAttribute('id');
+        }
+
+        // Update comment count with server data if available
+        if (commentHeader && data.comment_count !== undefined) {
+            commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + data.comment_count + ')';
+        }
+    })
+    .catch(function (error) {
+        console.error('Error submitting comment:', error);
+        // --- FAILURE: Remove the optimistic comment ---
+        const tempComment = document.getElementById(tempId);
+        if (tempComment) {
+            tempComment.remove();
+        }
+        // Revert comment count
+        if (commentHeader) {
+            commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + originalCount + ')';
+        }
+        showFlashMessage('Failed to post comment. Try again.', 'danger');
+    });
+}
+
+// ============================================================
+// Helper: Show a temporary flash message
+// ============================================================
+function showFlashMessage(message, category) {
+    // Remove any existing flash messages
+    var existing = document.querySelector('.flash-message-toast');
+    if (existing) existing.remove();
+
+    var toast = document.createElement('div');
+    toast.className = 'flash-message-toast alert alert-' + category + ' alert-dismissible fade show rounded-4 shadow-sm';
+    toast.style.position = 'fixed';
+    toast.style.top = '70px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.zIndex = '9999';
+    toast.style.maxWidth = '400px';
+    toast.innerHTML = message +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    document.body.appendChild(toast);
+
+    // Auto-dismiss after 4 seconds
+    setTimeout(function() {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 4000);
+}
+
+// ============================================================
+// Helper: Escape HTML to prevent XSS
+// ============================================================
+function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
 }
 
 // Toggle follow (AJAX)
 function toggleFollow(button) {
     const username = button.dataset.username;
     const icon = button.querySelector('i');
-    const textSpan = document.getElementById('followText');
+    const textSpan = button.querySelector('span') || document.getElementById('followText');
     const countSpan = document.getElementById('followerCount');
 
     fetch('/user/' + username + '/follow', {
@@ -144,12 +327,12 @@ function toggleFollow(button) {
             return;
         }
         if (data.following) {
-            icon.className = 'bi bi-person-check me-1';
-            textSpan.textContent = 'Following';
+            if (icon) { icon.className = 'bi bi-person-check me-1'; }
+            if (textSpan) textSpan.textContent = 'Following';
             button.className = 'btn btn-outline-secondary rounded-pill px-4';
         } else {
-            icon.className = 'bi bi-person-plus me-1';
-            textSpan.textContent = 'Follow';
+            if (icon) { icon.className = 'bi bi-person-plus me-1'; }
+            if (textSpan) textSpan.textContent = 'Follow';
             button.className = 'btn btn-primary rounded-pill px-4';
         }
         if (countSpan) {
@@ -158,7 +341,7 @@ function toggleFollow(button) {
     })
     .catch(function (error) {
         console.error('Error toggling follow:', error);
-        window.location.reload();
+        showFlashMessage('Failed to update follow status. Try again.', 'danger');
     });
 }
 
@@ -193,72 +376,7 @@ function toggleGroupJoin(button) {
     })
     .catch(function (error) {
         console.error('Error toggling group join:', error);
-        window.location.reload();
-    });
-}
-
-// Submit comment (AJAX)
-function submitComment(form) {
-    const postId = form.dataset.postId;
-    const input = document.getElementById('comment-input');
-    const text = input.value.trim();
-
-    if (!text) return;
-
-    var formData = new FormData();
-    formData.append('text', text);
-
-    fetch('/posts/' + postId + '/comment', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function (response) {
-        if (response.redirected) {
-            window.location.href = response.url;
-            return;
-        }
-        return response.json();
-    })
-    .then(function (data) {
-        if (!data) return;
-        if (data.error) {
-            console.error(data.error);
-            return;
-        }
-
-        // Append new comment to list
-        const commentList = document.getElementById('comment-list');
-        const newComment = document.createElement('div');
-        newComment.className = 'd-flex gap-3 mb-3 comment-item';
-        newComment.innerHTML =
-            '<div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">' +
-                '<i class="bi bi-person-fill text-secondary small"></i>' +
-            '</div>' +
-            '<div class="bg-light rounded-4 px-3 py-2 flex-grow-1">' +
-                '<strong class="d-block small">' + data.author + '</strong>' +
-                '<p class="mb-0">' + data.text + '</p>' +
-                '<small class="text-muted">' + data.created_at + '</small>' +
-            '</div>';
-        commentList.appendChild(newComment);
-
-        // Clear input
-        input.value = '';
-
-        // Update comment count on the page if present
-        const commentHeader = document.querySelector('h5.fw-semibold.mb-3');
-        if (commentHeader) {
-            var match = commentHeader.textContent.match(/\((\d+)\)/);
-            var count = match ? parseInt(match[1]) + 1 : 1;
-            commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + count + ')';
-        }
-    })
-    .catch(function (error) {
-        console.error('Error submitting comment:', error);
-        window.location.reload();
+        showFlashMessage('Failed to update group membership. Try again.', 'danger');
     });
 }
 
@@ -335,6 +453,6 @@ function deletePost(postId) {
     })
     .catch(function (error) {
         console.error('Error deleting post:', error);
-        window.location.reload();
+        showFlashMessage('Failed to delete post. Try again.', 'danger');
     });
 }

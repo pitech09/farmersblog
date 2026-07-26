@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/twitter-style.css') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% if current_user.is_authenticated %}
+    <meta name="current-username" content="{{ current_user.username }}">
+    {% endif %}
 </head>
 <body>
     <!-- Top Bar (brand only, minimal) -->
@@ -111,6 +114,10 @@
             <a href="{{ url_for('main.index') }}" class="bottom-nav-item {% if request.endpoint == 'main.index' %}active{% endif %}">
                 <i class="bi bi-house-door{% if request.endpoint == 'main.index' %}-fill{% endif %}"></i>
                 <span>Home</span>
+            </a>
+            <a href="{{ url_for('search.search_posts') }}" class="bottom-nav-item {% if request.endpoint and 'search' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-search{% if request.endpoint and 'search' in request.endpoint %}{% endif %}"></i>
+                <span>Search</span>
             </a>
             <a href="{{ url_for('marketplace.index') }}" class="bottom-nav-item {% if request.endpoint and 'marketplace' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-shop{% if request.endpoint and 'marketplace' in request.endpoint %}{% endif %}"></i>

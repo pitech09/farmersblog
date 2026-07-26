@@ -71,8 +71,10 @@ def create_app(config_class=None):
     from app.blueprints.marketplace import marketplace_bp
     from app.blueprints.notifications import notifications_bp
     from app.blueprints.admin import admin_bp
+    from app.blueprints.search import search_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(search_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(posts_bp, url_prefix='/posts')
     app.register_blueprint(profile_bp, url_prefix='/user')
@@ -128,6 +130,8 @@ def create_app(config_class=None):
                 response.headers[header] = value
         return response
 
-    # Create tables
+    # Create tables (safe to call repeatedly - uses IF NOT EXISTS internally)
+    with app.app_context():
+        db.create_all()
 
     return app

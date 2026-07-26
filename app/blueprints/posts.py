@@ -60,8 +60,15 @@ def create():
     if form.validate_on_submit():
         caption = request.form.get('caption', '').strip()
         from bleach import clean
-        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'b', 'i']
+        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'b', 'i', 'a']
         caption = clean(caption, tags=allowed_tags, strip=True)
+        # Auto-link URLs so links are clickable
+        import re
+        url_pattern = re.compile(r'https?://[^\s<>"\']+')
+        caption = url_pattern.sub(
+            lambda m: f'<a href="{m.group(0)}" target="_blank" rel="noopener noreferrer">{m.group(0)}</a>',
+            caption
+        )
         group_id = form.group_id.data or None
 
         # If posting to a group, verify membership
@@ -221,7 +228,8 @@ def comment(post_id):
         'id': comment.id,
         'text': comment.text,
         'author': comment.author.username,
-        'created_at': comment.created_at.strftime('%b %d, %Y at %I:%M %p')
+        'created_at': comment.created_at.strftime('%b %d, %Y at %I:%M %p'),
+        'comment_count': post.comment_count
     })
 
 
@@ -242,8 +250,16 @@ def edit(post_id):
     if form.validate_on_submit():
         caption = request.form.get('caption', '').strip()
         from bleach import clean
-        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'b', 'i']
-        post.caption = clean(caption, tags=allowed_tags, strip=True)
+        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'b', 'i', 'a']
+        caption = clean(caption, tags=allowed_tags, strip=True)
+        # Auto-link URLs so links are clickable
+        import re
+        url_pattern = re.compile(r'https?://[^\s<>"\']+')
+        caption = url_pattern.sub(
+            lambda m: f'<a href="{m.group(0)}" target="_blank" rel="noopener noreferrer">{m.group(0)}</a>',
+            caption
+        )
+        post.caption = caption
         
         group_id = form.group_id.data or None
         if group_id:

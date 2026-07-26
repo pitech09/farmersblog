@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Discover Users - farmersblog{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+    <!-- Search Header -->
+    <div class="card shadow-sm rounded-4 border-0 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-people me-2" style="color: #1877F2;"></i>Discover Users
+            </h5>
+            <form action="{{ url_for('search.search_users') }}" method="GET" class="d-flex gap-2">
+                <div class="input-group">
+                    <input type="text" name="q" class="form-control bg-light border-0 rounded-4 py-2"
+                           placeholder="Search by username or location..." value="{{ query }}" autofocus>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 ms-2">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+            {% if not query %}
+            <div class="mt-3 d-flex gap-2">
+                <a href="{{ url_for('search.search_users') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 active">All</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if query %}
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h6 class="fw-semibold mb-0">
+            Results for "<span class="text-primary">{{ query }}</span>"
+        </h6>
+        <small class="text-muted">{{ pagination.total }} user{% if pagination.total != 1 %}s{% endif %} found</small>
+    </div>
+    {% endif %}
+
+    {% if users %}
+    <div class="row g-3">
+        {% for user in users %}
+        <div class="col-12">
+            <div class="card shadow-sm rounded-4 border-0">
+                <div class="card-body d-flex align-items-center gap-3 p-3">
+                    <a href="{{ url_for('profile.public_profile', username=user.username) }}" class="text-decoration-none flex-shrink-0">
+                        {% if user.avatar_filename %}
+                        <img src="{{ avatar_url(user.avatar_filename) }}" class="rounded-circle"
+                             style="width: 48px; height: 48px; object-fit: cover;" alt="Avatar">
+                        {% else %}
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
+                             style="width: 48px; height: 48px;">
+                            <i class="bi bi-person-fill text-primary"></i>
+                        </div>
+                        {% endif %}
+                    </a>
+                    <div class="flex-grow-1 min-w-0">
+                        <a href="{{ url_for('profile.public_profile', username=user.username) }}"
+                           class="text-decoration-none fw-semibold d-block text-truncate">
+                            {{ user.username }}
+                        </a>
+                        {% if user.bio %}
+                        <small class="text-muted d-block text-truncate">{{ user.bio[:80] }}{% if user.bio|length > 80 %}...{% endif %}</small>
+                        {% endif %}
+                        <div class="d-flex gap-3 mt-1">
+                            <small class="text-muted">
+                                <i class="bi bi-postcard me-1"></i>{{ user.post_count }} posts
+                            </small>
+                            <small class="text-muted">
+                                <i class="bi bi-people me-1"></i>{{ user.follower_count }} followers
+                            </small>
+                            {% if user.location %}
+                            <small class="text-muted">
+                                <i class="bi bi-geo-alt me-1"></i>{{ user.location }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if current_user.is_authenticated and current_user != user %}
+                    <div class="flex-shrink-0">
+                        <button class="btn rounded-pill px-3 {% if user.current_user_is_following %}btn-outline-secondary{% else %}btn-primary{% endif %} btn-sm follow-btn"
+                                data-username="{{ user.username }}"
+                                onclick="toggleFollow(this)">
+                            <i class="bi {% if user.current_user_is_following %}bi-person-check{% else %}bi-person-plus{% endif %} me-1"></i>
+                            <span>{% if user.current_user_is_following %}Following{% else %}Follow{% endif %}</span>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="User search pagination" class="my-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link rounded-pill" href="{{ url_for('search.search_users', q=query, page=pagination.prev_num) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link rounded-pill" href="{{ url_for('search.search_users', q=query, page=pagination.next_num) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-people" style="font-size: 3rem; color: #ccc;"></i>
+        <h5 class="fw-semibold mt-3">No users found</h5>
+        {% if query %}
+        <p class="text-muted">No users match "{{ query }}". Try different keywords.</p>
+        {% else %}
+        <p class="text-muted">No users to display yet.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.follow-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleFollow(this);
+        });
+    });
+});
+
+function toggleFollow(button) {
+    if (button.disabled) return;
+    button.disabled = true;
+    const username = button.getAttribute('data-username');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const textSpan = button.querySelector('span');
+    const icon = button.querySelector('i');
+    const originalText = textSpan ? textSpan.textContent : '';
+
+    fetch('/user/' + username + '/follow', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.following) {
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-secondary');
+            if (textSpan) textSpan.textContent = 'Following';
+            if (icon) {
+                icon.classList.remove('bi-person-plus');
+                icon.classList.add('bi-person-check');
+            }
+        } else {
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-primary');
+            if (textSpan) textSpan.textContent = 'Follow';
+            if (icon) {
+                icon.classList.remove('bi-person-check');
+                icon.classList.add('bi-person-plus');
+            }
+        }
+    })
+    .catch(function(error) {
+        console.error('Follow error:', error);
+        if (textSpan) textSpan.textContent = originalText;
+    })
+    .finally(function() {
+        button.disabled = false;
+    });
+}
+</script>
+{% endblock %}
