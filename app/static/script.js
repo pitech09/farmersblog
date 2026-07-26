@@ -57,20 +57,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// Toggle read more for long captions
-function toggleReadMore(link) {
-    var preview = link.parentElement.querySelector('.caption-preview');
-    var full = link.parentElement.querySelector('.caption-full');
-    if (full.classList.contains('d-none')) {
-        preview.classList.add('d-none');
-        full.classList.remove('d-none');
-        link.textContent = 'show less';
-    } else {
-        preview.classList.remove('d-none');
-        full.classList.add('d-none');
-        link.textContent = 'read more';
+// Toggle read more for long captions (delegated event listener)
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('caption-toggle')) {
+        const container = e.target.closest('.caption-container');
+        const preview = container.querySelector('.caption-preview');
+        const full = container.querySelector('.caption-full');
+        const btn = e.target;
+        if (btn.dataset.action === 'expand') {
+            preview.classList.add('d-none');
+            full.classList.remove('d-none');
+            btn.textContent = ' show less';
+            btn.dataset.action = 'collapse';
+        } else {
+            preview.classList.remove('d-none');
+            full.classList.add('d-none');
+            btn.textContent = '...see more';
+            btn.dataset.action = 'expand';
+        }
     }
-}
+});
 
 // Clear media preview
 function clearMediaPreview() {

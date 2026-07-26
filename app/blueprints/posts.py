@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import magic
 from app.forms import PostForm
-from app.extensions import db, limiter
+from app.extensions import db
 from app.models import Post, Media, Comment, Group, User, Notification
 from app.helpers import get_media_url, upload_to_cloudinary
 
@@ -50,7 +50,6 @@ def validate_mime_type(file_path, expected_type):
 
 @posts_bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@limiter.limit("10 per minute")
 def create():
     groups = Group.query.filter(Group.members.any(id=current_user.id)).all()
     preselected_group = request.args.get('group')
@@ -59,9 +58,10 @@ def create():
     form.group_id.choices = [('', '— Public Feed —')] + [(g.id, g.name) for g in groups]
 
     if form.validate_on_submit():
-        caption = form.caption.data.strip() if form.caption.data else ''
+        caption = request.form.get('caption', '').strip()
         from bleach import clean
-        caption = clean(caption, tags=[], strip=True)[:5000]
+        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'b', 'i']
+        caption = clean(caption, tags=allowed_tags, strip=True)
         group_id = form.group_id.data or None
 
         # If posting to a group, verify membership
@@ -155,7 +155,6 @@ def create():
 
 @posts_bp.route('/<int:post_id>/like', methods=['POST'])
 @login_required
-@limiter.limit("30 per minute")
 def like(post_id):
     post = Post.query.get_or_404(post_id)
 
@@ -187,7 +186,6 @@ def like(post_id):
 
 @posts_bp.route('/<int:post_id>/comment', methods=['POST'])
 @login_required
-@limiter.limit("20 per minute")
 def comment(post_id):
     post = Post.query.get_or_404(post_id)
     text = request.form.get('text', '').strip()
@@ -229,7 +227,6 @@ def comment(post_id):
 
 @posts_bp.route('/<int:post_id>/edit', methods=['GET', 'POST'])
 @login_required
-@limiter.limit("10 per minute")
 def edit(post_id):
     post = Post.query.get_or_404(post_id)
     
@@ -243,9 +240,10 @@ def edit(post_id):
     form.group_id.choices = [('', '— Public Feed —')] + [(g.id, g.name) for g in groups]
     
     if form.validate_on_submit():
-        caption = form.caption.data.strip() if form.caption.data else ''
+        caption = request.form.get('caption', '').strip()
         from bleach import clean
-        post.caption = clean(caption, tags=[], strip=True)[:5000]
+        allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'ul', 'ol', 'li', 'b', 'i']
+        post.caption = clean(caption, tags=allowed_tags, strip=True)
         
         group_id = form.group_id.data or None
         if group_id:
@@ -269,7 +267,6 @@ def edit(post_id):
 
 @posts_bp.route('/<int:post_id>/delete', methods=['POST'])
 @login_required
-@limiter.limit("10 per minute")
 def delete(post_id):
     post = Post.query.get_or_404(post_id)
     

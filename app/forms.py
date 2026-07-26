@@ -44,8 +44,7 @@ class RegisterForm(FlaskForm):
 
 class PostForm(FlaskForm):
     caption = TextAreaField('Caption', validators=[
-        DataRequired(),
-        Length(max=500, message='Caption must be under 500 characters.')
+        DataRequired()
     ])
     media = FileField('Media', validators=[Optional()])
     group_id = SelectField('Post to Group', coerce=coerce_optional_int, validators=[Optional()])

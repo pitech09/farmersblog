@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from app.extensions import db, limiter
+from app.extensions import db
 from app.models import User, Message, Notification, Listing
 
 messages_bp = Blueprint('messages', __name__)
@@ -9,7 +9,6 @@ messages_bp = Blueprint('messages', __name__)
 
 @messages_bp.route('/')
 @login_required
-@limiter.limit("30 per minute")
 def inbox():
     # Get all messages involving current user
     messages = Message.query.filter(
@@ -80,7 +79,6 @@ def conversation(username):
 
 @messages_bp.route('/send', methods=['POST'])
 @login_required
-@limiter.limit("30 per minute")
 def send():
     data = request.get_json()
     if not data:

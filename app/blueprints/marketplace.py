@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import magic
 from app.forms import ListingForm
-from app.extensions import db, limiter, cache
+from app.extensions import db, cache
 from app.models import Listing, User
 from app.helpers import get_media_url, upload_to_cloudinary
 
@@ -57,7 +57,6 @@ def index():
 
 @marketplace_bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@limiter.limit("5 per minute")
 def create():
     categories = ['Seeds', 'Equipment', 'Livestock', 'Produce', 'Other']
     

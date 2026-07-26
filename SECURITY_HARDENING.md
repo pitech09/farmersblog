@@ -50,7 +50,7 @@
 
 ### Additional Hardening (Manual Steps)
 1. **HTTPS**: Ensure production uses HTTPS
-2. **Database**: Use PostgreSQL/MySQL instead of SQLite in production
+2. **Database**: PostgreSQL is used for both development and production (SQLite only for tests)
 3. **CORS**: Configure CORS properly if using API
 4. **Logging**: Add security event logging
 5. **Account Lockout**: Implement account lockout after failed login attempts

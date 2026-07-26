@@ -2,7 +2,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort
 from flask_login import login_required, current_user
-from app.extensions import db, limiter
+from app.extensions import db
 from app.models import User, Post, Comment, Message, Listing, Group, Notification, post_likes, group_members
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -71,7 +71,6 @@ def users():
 
 @admin_bp.route('/users/<int:user_id>/toggle-admin', methods=['POST'])
 @admin_required
-@limiter.limit("30 per minute")
 def toggle_admin(user_id):
     """Promote or demote a user as admin."""
     user = User.query.get_or_404(user_id)
@@ -90,7 +89,6 @@ def toggle_admin(user_id):
 
 @admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @admin_required
-@limiter.limit("10 per minute")
 def delete_user(user_id):
     """Delete a user and all associated content."""
     user = User.query.get_or_404(user_id)
@@ -146,7 +144,6 @@ def posts():
 
 @admin_bp.route('/posts/<int:post_id>/delete', methods=['POST'])
 @admin_required
-@limiter.limit("10 per minute")
 def delete_post(post_id):
     """Delete a post."""
     post = Post.query.get_or_404(post_id)
@@ -173,7 +170,6 @@ def listings():
 
 @admin_bp.route('/listings/<int:listing_id>/toggle-sold', methods=['POST'])
 @admin_required
-@limiter.limit("30 per minute")
 def toggle_listing_sold(listing_id):
     """Toggle a listing's sold status."""
     listing = Listing.query.get_or_404(listing_id)
@@ -186,7 +182,6 @@ def toggle_listing_sold(listing_id):
 
 @admin_bp.route('/listings/<int:listing_id>/delete', methods=['POST'])
 @admin_required
-@limiter.limit("10 per minute")
 def delete_listing(listing_id):
     """Delete a marketplace listing."""
     listing = Listing.query.get_or_404(listing_id)
@@ -213,7 +208,6 @@ def groups():
 
 @admin_bp.route('/groups/<int:group_id>/delete', methods=['POST'])
 @admin_required
-@limiter.limit("10 per minute")
 def delete_group(group_id):
     """Delete a group."""
     group = Group.query.get_or_404(group_id)

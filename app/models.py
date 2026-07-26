@@ -153,13 +153,17 @@ class Post(db.Model):
 
     @property
     def caption_preview(self):
-        if len(self.caption) > 150:
-            return self.caption[:150] + '...'
-        return self.caption
+        # Strip HTML tags and truncate to 150 characters of plain text
+        plain_text = bleach.clean(self.caption, tags=[], strip=True)
+        if len(plain_text) > 150:
+            return plain_text[:150] + '...'
+        return plain_text
 
     @property
     def has_long_caption(self):
-        return len(self.caption) > 150
+        # Compute length from plain text (strip HTML tags)
+        plain_text = bleach.clean(self.caption, tags=[], strip=True)
+        return len(plain_text) > 150
 
     def __repr__(self):
         return f'<Post {self.id} by {self.author_id}>'

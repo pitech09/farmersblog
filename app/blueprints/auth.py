@@ -1,19 +1,13 @@
 from flask import Blueprint, render_template, redirect, session, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
-from flask_limiter import Limiter
 from app.forms import LoginForm, RegisterForm
-from app.extensions import db, limiter
+from app.extensions import db
 from app.models import User
 
 auth_bp = Blueprint('auth', __name__)
 
-# Rate limiters for auth endpoints
-login_limiter = Limiter(key_func=lambda: request.remote_addr)
-register_limiter = Limiter(key_func=lambda: request.remote_addr)
-
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
@@ -38,7 +32,6 @@ def login():
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))

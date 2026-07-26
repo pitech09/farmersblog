@@ -61,7 +61,7 @@ class Config:
         SECRET_KEY = secrets.token_hex(32)
         print("WARNING: Using auto-generated SECRET_KEY. Set SECRET_KEY env var in production!")
     
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///farmersblog.db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/farmersblog')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Security: Limit upload size to 50MB
@@ -898,7 +898,7 @@ def create_security_checklist():
 
 ### Additional Hardening (Manual Steps)
 1. **HTTPS**: Ensure production uses HTTPS
-2. **Database**: Use PostgreSQL/MySQL instead of SQLite in production
+2. **Database**: PostgreSQL is used for both development and production (SQLite only for tests)
 3. **CORS**: Configure CORS properly if using API
 4. **Logging**: Add security event logging
 5. **Account Lockout**: Implement account lockout after failed login attempts

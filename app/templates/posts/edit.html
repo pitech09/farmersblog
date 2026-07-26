@@ -1,6 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Edit Post - farmersblog{% endblock %}
 
+{% block extra_js %}
+<script>
+let captionEditor;
+// Get existing caption HTML for pre-population
+const existingCaption = document.querySelector('#caption').value;
+ClassicEditor
+    .create(document.querySelector('#caption'), {
+        toolbar: ['bold', 'italic', 'bulletedList', 'numberedList', 'undo', 'redo'],
+        placeholder: 'Write your caption...',
+        initialData: existingCaption || ''
+    })
+    .then(editor => { captionEditor = editor; })
+    .catch(error => console.error(error));
+
+// Sync CKEditor content back to the textarea before form submission
+document.querySelector('form').addEventListener('submit', function() {
+    if (captionEditor) {
+        document.querySelector('#caption').value = captionEditor.getData();
+    }
+});
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container" style="max-width: 680px;">
     <div class="card shadow-sm rounded-4 border-0">
@@ -14,7 +37,7 @@
                 {{ form.csrf_token }}
                 <div class="mb-4">
                     <label for="caption" class="form-label fw-semibold">Caption</label>
-                    {{ form.caption(class="form-control bg-light border-0 rounded-4 p-3", rows="4", placeholder="Write something about your photos...", required=true) }}
+                    <textarea id="caption" name="caption" class="form-control bg-light border-0 rounded-4 p-3" required>{{ form.caption.data or '' }}</textarea>
                 </div>
                 {% if groups %}
                 <div class="mb-4">

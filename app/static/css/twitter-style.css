@@ -72,6 +72,28 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--bg-primary);
 }
 
+/* Prevent UI overflow in post cards and captions */
+.post-card, .caption-container, .caption-full {
+    overflow: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+.caption-full ul, .caption-full ol {
+    padding-left: 1.2rem;
+    margin-bottom: 0;
+}
+.caption-toggle {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+}
+.caption-toggle:hover {
+    text-decoration: underline;
+    color: var(--twitter-blue);
+}
+
 .post-avatar {
     width: 40px;
     height: 40px;
@@ -117,9 +139,6 @@ h1, h2, h3, h4, h5, h6 {
     word-wrap: break-word;
 }
 
-.caption-full {
-    display: none;
-}
 
 .read-more-link {
     color: var(--text-secondary);

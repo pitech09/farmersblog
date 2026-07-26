@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from app.forms import GroupForm
-from app.extensions import db, limiter
+from app.extensions import db
 from app.models import Group, Post, User
 
 groups_bp = Blueprint('groups', __name__)
@@ -70,7 +70,6 @@ def detail(group_name):
 
 @groups_bp.route('/<group_name>/join', methods=['POST'])
 @login_required
-@limiter.limit("10 per minute")
 def join(group_name):
     group = Group.query.filter_by(name=group_name).first_or_404()
 

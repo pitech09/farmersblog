@@ -11,10 +11,10 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
 
-# Rate limiter for brute-force protection
+# Rate limiter (disabled - set to extremely high limits)
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["100000 per minute"],
     storage_uri="memory://"
 )
 
