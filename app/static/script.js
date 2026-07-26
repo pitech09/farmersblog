@@ -419,6 +419,71 @@ function showShareToast() {
     }
 }
 
+// ============================================================
+// Notification sound polling (Web Audio API)
+// ============================================================
+function playNotificationSound() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+
+        function beep(freq, startTime, duration) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.25, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        const now = ctx.currentTime;
+        beep(880, now, 0.12);
+        beep(1047, now + 0.14, 0.12);
+    } catch (e) {
+        console.error('Error playing notification sound:', e);
+    }
+}
+
+function startNotificationPolling() {
+    let lastNotificationCount = null;
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const isAuthenticated = document.querySelector('meta[name="current-username"]') !== null;
+
+    if (!isAuthenticated) return;
+
+    function poll() {
+        fetch('/notifications/unread-count', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrf
+            }
+        })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+            const count = typeof data.count === 'number' ? data.count : 0;
+            if (lastNotificationCount === null) {
+                lastNotificationCount = count;
+                return;
+            }
+            if (count > lastNotificationCount) {
+                playNotificationSound();
+            }
+            lastNotificationCount = count;
+        })
+        .catch(function (error) {
+            console.error('Notification polling error:', error);
+        });
+    }
+
+    poll();
+    setInterval(poll, 10000);
+}
+
 // Delete post (AJAX) - owner only
 function deletePost(postId) {
     if (!confirm('Are you sure you want to delete this post?')) {

@@ -168,8 +168,14 @@
     <script src="https://cdn.ckeditor.com/ckeditor5/40.2.0/classic/ckeditor.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     {% block extra_js %}{% endblock %}
-    <script>
-        function markNotificationRead(el, notificationId) {
+        <script>
+            if (typeof startNotificationPolling === 'function') {
+                try { startNotificationPolling(); } catch (e) { console.error(e); }
+            }
+        </script>
+
+        <script>
+            function markNotificationRead(el, notificationId) {
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             fetch('/notifications/' + notificationId + '/read', {
                 method: 'POST',
