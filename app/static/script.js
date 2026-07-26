@@ -425,7 +425,7 @@ function showShareToast() {
 }
 
 // ============================================================
-// Convert UTC timestamps to local time
+// Convert UTC timestamps to Africa/Johannesburg time
 // ============================================================
 function convertLocalTimes() {
     const elements = document.querySelectorAll('.local-time');
@@ -437,7 +437,8 @@ function convertLocalTimes() {
         if (isNaN(date.getTime())) return;
         let formatted;
         try {
-            formatted = date.toLocaleString(undefined, {
+            formatted = date.toLocaleString('en-ZA', {
+                timeZone: 'Africa/Johannesburg',
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',
