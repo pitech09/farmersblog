@@ -40,6 +40,7 @@
                             {% for n in recent_notifications %}
                             <li>
                                 <a href="{{ n.link }}" class="dropdown-item d-flex align-items-start gap-2 py-2 px-3 {% if not n.read %}notification-unread{% endif %}"
+                                   data-notification-id="{{ n.id }}"
                                    {% if not n.read %}onclick="event.preventDefault(); markNotificationRead(this, {{ n.id }}); setTimeout(function(){ window.location.href='{{ n.link }}'; }, 200);"{% endif %}>
                                     <div class="flex-shrink-0 mt-1">
                                         {% if n.actor.avatar_filename %}
@@ -178,55 +179,5 @@
                 try { startNotificationPolling(); } catch (e) { console.error(e); }
             }
         </script>
-
-        <script>
-            function markNotificationRead(el, notificationId) {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            fetch('/notifications/' + notificationId + '/read', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
-                }
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                if (data.success) {
-                    el.classList.remove('notification-unread');
-                    const inline = el.querySelector('.mark-read-btn');
-                    if (inline) inline.remove();
-                    updateNotificationCount();
-                }
-            })
-            .catch(function(error) {
-                console.error('Error marking notification as read:', error);
-            });
-        }
-
-        function updateNotificationCount() {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            fetch('/notifications/unread-count', {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
-                }
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                const badge = document.getElementById('notificationBadge');
-                if (badge) {
-                    if (data.count > 0) {
-                        badge.textContent = data.count;
-                        badge.style.display = 'inline';
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                }
-            })
-            .catch(function(error) {
-                console.error('Error updating notification count:', error);
-            });
-        }
-    </script>
 </body>
 </html>

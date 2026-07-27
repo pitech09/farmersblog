@@ -149,33 +149,5 @@
             });
         });
     }
-
-    // Update navbar unread badge via AJAX polling
-    function updateNotificationCount() {
-        fetch('/notifications/unread-count', {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken
-            }
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            const badge = document.getElementById('notificationBadge');
-            if (badge) {
-                if (data.count > 0) {
-                    badge.textContent = data.count;
-                    badge.style.display = 'inline';
-                } else {
-                    badge.style.display = 'none';
-                }
-            }
-        })
-        .catch(function(error) {
-            console.error('Error updating notification count:', error);
-        });
-    }
-
-    // Poll for new notification count every 60 seconds
-    setInterval(updateNotificationCount, 60000);
 </script>
 {% endblock %}

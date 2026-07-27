@@ -456,6 +456,59 @@ function convertLocalTimes() {
 document.addEventListener('DOMContentLoaded', function () {
     convertLocalTimes();
 });
+
+// ============================================================
+// Mark a single notification as read (AJAX)
+// ============================================================
+function markNotificationRead(el, notificationId) {
+    fetch('/notifications/' + notificationId + '/read', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) {
+            el.classList.remove('notification-unread');
+            const inline = el.querySelector('.mark-read-btn');
+            if (inline) inline.remove();
+            updateNotificationCount();
+        }
+    })
+    .catch(function(error) {
+        console.error('Error marking notification as read:', error);
+    });
+}
+
+// ============================================================
+// Update the unread notification count badge
+// ============================================================
+function updateNotificationCount() {
+    fetch('/notifications/unread-count', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        const badge = document.getElementById('notificationBadge');
+        if (badge) {
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    })
+    .catch(function(error) {
+        console.error('Error updating notification count:', error);
+    });
+}
+
 // ============================================================
 // Notification sound polling (Web Audio API)
 // ============================================================
@@ -488,7 +541,6 @@ function playNotificationSound() {
 
 function startNotificationPolling() {
     let lastNotificationCount = null;
-    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const isAuthenticated = document.querySelector('meta[name="current-username"]') !== null;
 
     if (!isAuthenticated) return;
@@ -497,7 +549,7 @@ function startNotificationPolling() {
         fetch('/notifications/unread-count', {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrf
+                'X-CSRFToken': csrfToken
             }
         })
         .then(function (response) { return response.json(); })
