@@ -47,10 +47,9 @@
                     <i class="bi bi-gear me-1"></i>Edit Profile
                 </a>
                 {% else %}
-                <button class="btn rounded-pill px-4 {% if is_following %}btn-outline-secondary{% else %}btn-primary{% endif %}"
-                        id="followBtn"
-                        data-username="{{ profile_user.username }}"
-                        onclick="toggleFollow(this)">
+                <button class="btn rounded-pill px-4 {% if is_following %}btn-outline-secondary{% else %}btn-primary{% endif %} follow-btn"
+                        data-action="follow"
+                        data-username="{{ profile_user.username }}">
                     <i class="bi {% if is_following %}bi-person-check{% else %}bi-person-plus{% endif %} me-1"></i>
                     <span id="followText">{% if is_following %}Following{% else %}Follow{% endif %}</span>
                 </button>
@@ -120,58 +119,5 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('#followBtn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            toggleFollow(this);
-        });
-    });
-});
-
-function toggleFollow(button) {
-    if (button.disabled) return;
-    button.disabled = true;
-    const username = button.getAttribute('data-username');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    const followText = document.getElementById('followText');
-    const originalText = followText ? followText.textContent : '';
-
-    fetch('/user/' + username + '/follow', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        if (data.following) {
-            button.classList.remove('btn-primary');
-            button.classList.add('btn-outline-secondary');
-            if (followText) followText.textContent = 'Following';
-            button.querySelector('i').classList.remove('bi-person-plus');
-            button.querySelector('i').classList.add('bi-person-check');
-        } else {
-            button.classList.remove('btn-outline-secondary');
-            button.classList.add('btn-primary');
-            if (followText) followText.textContent = 'Follow';
-            button.querySelector('i').classList.remove('bi-person-check');
-            button.querySelector('i').classList.add('bi-person-plus');
-        }
-        const followerCount = document.getElementById('followerCount');
-        if (followerCount && data.follower_count !== undefined) {
-            followerCount.textContent = data.follower_count;
-        }
-    })
-    .catch(function(error) {
-        console.error('Follow error:', error);
-        if (followText) followText.textContent = originalText;
-    })
-    .finally(function() {
-        button.disabled = false;
-    });
-}
 </script>
 {% endblock %}

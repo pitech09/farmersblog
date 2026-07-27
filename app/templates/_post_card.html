@@ -56,8 +56,8 @@
         <div class="post-actions">
             {% if current_user.is_authenticated %}
             <button class="action-btn {% if post.user_has_liked %}liked{% endif %}"
-                    data-post-id="{{ post.id }}"
-                    onclick="toggleLike(this)">
+                    data-action="like"
+                    data-post-id="{{ post.id }}">
                 <span class="action-icon">
                     <i class="bi {% if post.user_has_liked %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
                 </span>

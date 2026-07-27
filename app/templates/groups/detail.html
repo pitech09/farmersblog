@@ -23,10 +23,9 @@
                     </div>
                 </div>
                 {% if current_user.is_authenticated %}
-                <button class="btn rounded-pill px-4 {% if is_member %}btn-outline-secondary{% else %}btn-primary{% endif %} flex-shrink-0"
-                        id="joinBtn"
-                        data-group-name="{{ group.name }}"
-                        onclick="toggleGroupJoin(this)">
+                <button class="btn rounded-pill px-4 {% if is_member %}btn-outline-secondary{% else %}btn-primary{% endif %} flex-shrink-0 group-join-btn"
+                        data-action="group-join"
+                        data-group-name="{{ group.name }}">
                     <i class="bi {% if is_member %}bi-person-check{% else %}bi-person-plus{% endif %} me-1"></i>
                     <span id="joinText">{% if is_member %}Joined{% else %}Join{% endif %}</span>
                 </button>

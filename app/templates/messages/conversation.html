@@ -85,54 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const body = messageInput.value.trim();
-        if (!body) return;
-
-        // Disable button and show loading state
-        sendButton.disabled = true;
-        const originalHTML = sendButton.innerHTML;
-        sendButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending';
-
-        console.log('Sending message to:', recipientUsername, 'body:', body);
-
-        fetch('{{ url_for("messages.send") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({
-                recipient_username: recipientUsername,
-                body: body,
-                listing_id: listingId || null
-            })
-        })
-        .then(function(response) {
-            console.log('Send response status:', response.status);
-            if (!response.ok) {
-                // Try to parse error JSON, but if not JSON (like a 500), treat as server error
-                return response.json().then(function(data) { throw new Error(data.error || 'Unknown server error'); })
-                              .catch(function() { throw new Error('Server error (status ' + response.status + ')'); });
-            }
-            return response.json();
-        })
-        .then(function(data) {
-            console.log('Send success:', data);
-            if (data.success) {
-                appendMessage(data.body, data.timestamp, true);
-                messageInput.value = '';
-                lastMessageId = data.id;
-            }
-        })
-        .catch(function(error) {
-            console.error('Send failed:', error);
-            alert('Failed to send message: ' + error.message);
-        })
-        .finally(function() {
-            sendButton.disabled = false;
-            sendButton.innerHTML = originalHTML;
-        });
+        if (!messageInput.value.trim()) return;
+        sendMessage(messageForm, messageInput, sendButton, recipientUsername);
     });
 
     // Append message to chat

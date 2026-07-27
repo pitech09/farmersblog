@@ -82,8 +82,8 @@
                 <!-- Like Button -->
                 {% if current_user.is_authenticated %}
                 <button class="btn btn-like rounded-pill d-flex align-items-center gap-2 px-3 py-2 {% if post.user_has_liked %}liked{% endif %}"
-                        data-post-id="{{ post.id }}"
-                        onclick="toggleLike(this)">
+                        data-action="like"
+                        data-post-id="{{ post.id }}">
                     <i class="bi {% if post.user_has_liked %}bi-heart-fill{% else %}bi-heart{% endif %} fs-5"></i>
                     <span class="like-count fw-semibold">{{ post.like_count }}</span>
                 </button>

@@ -77,8 +77,8 @@
                     {% if current_user.is_authenticated and current_user != user %}
                     <div class="flex-shrink-0">
                         <button class="btn rounded-pill px-3 {% if user.current_user_is_following %}btn-outline-secondary{% else %}btn-primary{% endif %} btn-sm follow-btn"
-                                data-username="{{ user.username }}"
-                                onclick="toggleFollow(this)">
+                                data-action="follow"
+                                data-username="{{ user.username }}">
                             <i class="bi {% if user.current_user_is_following %}bi-person-check{% else %}bi-person-plus{% endif %} me-1"></i>
                             <span>{% if user.current_user_is_following %}Following{% else %}Follow{% endif %}</span>
                         </button>
@@ -121,59 +121,5 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.follow-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            toggleFollow(this);
-        });
-    });
-});
-
-function toggleFollow(button) {
-    if (button.disabled) return;
-    button.disabled = true;
-    const username = button.getAttribute('data-username');
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    const textSpan = button.querySelector('span');
-    const icon = button.querySelector('i');
-    const originalText = textSpan ? textSpan.textContent : '';
-
-    fetch('/user/' + username + '/follow', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        if (data.following) {
-            button.classList.remove('btn-primary');
-            button.classList.add('btn-outline-secondary');
-            if (textSpan) textSpan.textContent = 'Following';
-            if (icon) {
-                icon.classList.remove('bi-person-plus');
-                icon.classList.add('bi-person-check');
-            }
-        } else {
-            button.classList.remove('btn-outline-secondary');
-            button.classList.add('btn-primary');
-            if (textSpan) textSpan.textContent = 'Follow';
-            if (icon) {
-                icon.classList.remove('bi-person-check');
-                icon.classList.add('bi-person-plus');
-            }
-        }
-    })
-    .catch(function(error) {
-        console.error('Follow error:', error);
-        if (textSpan) textSpan.textContent = originalText;
-    })
-    .finally(function() {
-        button.disabled = false;
-    });
-}
 </script>
 {% endblock %}

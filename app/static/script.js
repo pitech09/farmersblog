@@ -3,7 +3,43 @@
 // CSRF token helper
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+// ============================================================
+// OPTIMISTIC FETCH: Central helper for all optimistic UI actions
+// ============================================================
+function optimisticFetch(url, options, onRevert) {
+    options = options || {};
+    options.headers = options.headers || {};
+    options.headers['X-Requested-With'] = 'XMLHttpRequest';
+    options.headers['X-CSRFToken'] = csrfToken;
+
+    return fetch(url, options)
+        .then(function (response) {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return Promise.reject(new Error('Redirect'));
+            }
+            if (!response.ok) {
+                throw new Error('Server returned ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function (data) {
+            if (data && data.error) {
+                throw new Error(data.error);
+            }
+            return data;
+        })
+        .catch(function (error) {
+            if (error.message === 'Redirect') return;
+            console.error('Optimistic action failed:', error);
+            if (typeof onRevert === 'function') onRevert();
+            throw error;
+        });
+}
+
+// ============================================================
 // Initialize Bootstrap tooltips
+// ============================================================
 document.addEventListener('DOMContentLoaded', function () {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (el) {
@@ -54,50 +90,78 @@ document.addEventListener('DOMContentLoaded', function () {
             submitComment(e.target);
         }
     });
-});
 
-// Toggle read more for long captions (delegated event listener)
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('caption-toggle')) {
-        const container = e.target.closest('.caption-container');
-        const preview = container.querySelector('.caption-preview');
-        const full = container.querySelector('.caption-full');
-        const btn = e.target;
-        if (btn.dataset.action === 'expand') {
-            preview.classList.add('d-none');
-            full.classList.remove('d-none');
-            btn.textContent = ' show less';
-            btn.dataset.action = 'collapse';
-        } else {
-            preview.classList.remove('d-none');
-            full.classList.add('d-none');
-            btn.textContent = '...see more';
-            btn.dataset.action = 'expand';
+    // Like button delegation
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action="like"]')) {
+            const btn = e.target.closest('[data-action="like"]');
+            toggleLike(btn);
         }
-    }
-});
+    });
 
-// Clear media preview
-function clearMediaPreview() {
-    document.getElementById('media').value = '';
-    document.getElementById('mediaPreview').classList.add('d-none');
-    document.getElementById('uploadArea').classList.remove('d-none');
-    document.getElementById('previewContainer').innerHTML = '';
-}
+    // Follow button delegation
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action="follow"]')) {
+            const btn = e.target.closest('[data-action="follow"]');
+            toggleFollow(btn);
+        }
+    });
+
+    // Group join button delegation
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action="group-join"]')) {
+            const btn = e.target.closest('[data-action="group-join"]');
+            toggleGroupJoin(btn);
+        }
+    });
+
+    // Notification mark-as-read delegation (dropdown + page)
+    document.addEventListener('click', function(e) {
+        const markReadBtn = e.target.closest('.mark-read-btn');
+        if (markReadBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = markReadBtn.dataset.id;
+            const row = markReadBtn.closest('.list-group-item, .dropdown-item');
+            markNotificationRead(row, id);
+        }
+    });
+
+    // Mark all as read delegation
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#markAllReadBtn')) {
+            markAllNotificationsRead();
+        }
+    });
+});
 
 // ============================================================
-// OPTIMISTIC UI: Toggle like (AJAX) with immediate UI update
+// OPTIMISTIC UI: Toggle like
 // ============================================================
 function toggleLike(button) {
     const postId = button.dataset.postId;
     const icon = button.querySelector('i');
     const countSpan = button.querySelector('.like-count');
 
-    // Cache the original state before making changes
+    if (!icon || !countSpan) return;
+
     const wasLiked = icon.classList.contains('bi-heart-fill');
     const originalCount = parseInt(countSpan.textContent) || 0;
 
-    // --- OPTIMISTIC UPDATE: Apply changes immediately ---
+    function revert() {
+        if (wasLiked) {
+            icon.className = 'bi bi-heart-fill';
+            button.classList.add('liked');
+            countSpan.textContent = originalCount;
+        } else {
+            icon.className = 'bi bi-heart';
+            button.classList.remove('liked');
+            countSpan.textContent = originalCount;
+        }
+        showFlashMessage('Failed to update like. Please try again.', 'danger');
+    }
+
+    // Optimistic update
     if (wasLiked) {
         icon.className = 'bi bi-heart';
         button.classList.remove('liked');
@@ -108,34 +172,16 @@ function toggleLike(button) {
         countSpan.textContent = originalCount + 1;
     }
 
-    // Add a small scale pulse animation
+    // Pulse animation
     button.style.transition = 'transform 0.15s ease';
     button.style.transform = 'scale(1.3)';
     setTimeout(function() {
         button.style.transform = 'scale(1)';
     }, 150);
 
-    // --- SEND AJAX REQUEST ---
-    fetch('/posts/' + postId + '/like', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function (response) {
-        if (response.redirected) {
-            window.location.href = response.url;
-            return;
-        }
-        if (!response.ok) {
-            throw new Error('Server returned ' + response.status);
-        }
-        return response.json();
-    })
-    .then(function (data) {
-        if (!data) return;
-        // Update with server-confirmed values
+    optimisticFetch('/posts/' + postId + '/like', { method: 'POST' }, revert)
+    .then(function(data) {
+        // Sync with server state
         if (data.liked) {
             icon.className = 'bi bi-heart-fill';
             button.classList.add('liked');
@@ -144,25 +190,72 @@ function toggleLike(button) {
             button.classList.remove('liked');
         }
         countSpan.textContent = data.like_count;
-    })
-    .catch(function (error) {
-        console.error('Error toggling like:', error);
-        // --- REVERT on failure ---
-        if (wasLiked) {
-            icon.className = 'bi bi-heart-fill';
-            button.classList.add('liked');
-            countSpan.textContent = originalCount;
-        } else {
-            icon.className = 'bi bi-heart';
-            button.classList.remove('liked');
-            countSpan.textContent = originalCount;
-        }
-        showFlashMessage('Failed to like. Try again.', 'danger');
     });
 }
 
 // ============================================================
-// OPTIMISTIC UI: Submit comment (AJAX) with immediate append
+// OPTIMISTIC UI: Toggle follow
+// ============================================================
+function toggleFollow(button) {
+    const username = button.dataset.username;
+    const icon = button.querySelector('i');
+    const textSpan = button.querySelector('span');
+    const countSpan = document.getElementById('followerCount');
+
+    if (!icon || !textSpan) return;
+
+    const wasFollowing = button.classList.contains('btn-outline-secondary');
+    const originalText = textSpan.textContent;
+
+    function revert() {
+        if (wasFollowing) {
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-primary');
+            textSpan.textContent = 'Following';
+            icon.className = 'bi bi-person-check me-1';
+        } else {
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-secondary');
+            textSpan.textContent = 'Follow';
+            icon.className = 'bi bi-person-plus me-1';
+        }
+        showFlashMessage('Failed to update follow status. Try again.', 'danger');
+    }
+
+    // Optimistic update
+    if (wasFollowing) {
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-primary');
+        textSpan.textContent = 'Follow';
+        icon.className = 'bi bi-person-plus me-1';
+    } else {
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-outline-secondary');
+        textSpan.textContent = 'Following';
+        icon.className = 'bi bi-person-check me-1';
+    }
+
+    optimisticFetch('/user/' + encodeURIComponent(username) + '/follow', { method: 'POST' }, revert)
+    .then(function(data) {
+        if (data.following) {
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-secondary');
+            textSpan.textContent = 'Following';
+            icon.className = 'bi bi-person-check me-1';
+        } else {
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-primary');
+            textSpan.textContent = 'Follow';
+            icon.className = 'bi bi-person-plus me-1';
+        }
+        if (countSpan) {
+            countSpan.textContent = data.follower_count;
+        }
+    });
+}
+
+// ============================================================
+// OPTIMISTIC UI: Submit comment
 // ============================================================
 function submitComment(form) {
     const postId = form.dataset.postId;
@@ -171,11 +264,9 @@ function submitComment(form) {
 
     if (!text) return;
 
-    // Get current username from the page (fallback to 'You')
-    const currentUsername = document.querySelector('meta[name="current-username"]');
-    const username = currentUsername ? currentUsername.getAttribute('content') : 'You';
+    const currentUsernameMeta = document.querySelector('meta[name="current-username"]');
+    const username = currentUsernameMeta ? currentUsernameMeta.getAttribute('content') : 'You';
 
-    // --- OPTIMISTIC UPDATE: Append comment immediately ---
     const commentList = document.getElementById('comment-list');
     const tempId = 'temp-' + Date.now();
     const optimisticComment = document.createElement('div');
@@ -193,10 +284,8 @@ function submitComment(form) {
         '</div>';
     commentList.appendChild(optimisticComment);
 
-    // Clear input immediately
     input.value = '';
 
-    // Update comment count optimistically
     const commentHeader = document.querySelector('h5.fw-semibold.mb-3');
     let originalCount = 0;
     if (commentHeader) {
@@ -205,35 +294,23 @@ function submitComment(form) {
         commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + (originalCount + 1) + ')';
     }
 
-    // --- SEND AJAX REQUEST ---
     var formData = new FormData();
     formData.append('text', text);
 
-    fetch('/posts/' + postId + '/comment', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
+    function revertComment() {
+        const tempComment = document.getElementById(tempId);
+        if (tempComment) tempComment.remove();
+        if (commentHeader) {
+            commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + originalCount + ')';
         }
-    })
-    .then(function (response) {
-        if (response.redirected) {
-            window.location.href = response.url;
-            return;
-        }
-        if (!response.ok) {
-            throw new Error('Server returned ' + response.status);
-        }
-        return response.json();
-    })
-    .then(function (data) {
-        if (!data) return;
-        if (data.error) {
-            throw new Error(data.error);
-        }
+        showFlashMessage('Failed to post comment. Try again.', 'danger');
+    }
 
-        // --- SUCCESS: Replace optimistic comment with real one ---
+    optimisticFetch('/posts/' + postId + '/comment', {
+        method: 'POST',
+        body: formData
+    }, revertComment)
+    .then(function(data) {
         const tempComment = document.getElementById(tempId);
         if (tempComment) {
             tempComment.style.opacity = '1';
@@ -248,24 +325,221 @@ function submitComment(form) {
                 '</div>';
             tempComment.removeAttribute('id');
         }
-
-        // Update comment count with server data if available
         if (commentHeader && data.comment_count !== undefined) {
             commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + data.comment_count + ')';
         }
+    });
+}
+
+// ============================================================
+// OPTIMISTIC UI: Send message
+// ============================================================
+function sendMessage(form, input, sendButton, recipientUsername) {
+    var originalHTML = sendButton.innerHTML;
+    sendButton.disabled = true;
+    sendButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending';
+
+    const body = input.value.trim();
+    if (!body) {
+        sendButton.disabled = false;
+        sendButton.innerHTML = originalHTML;
+        return;
+    }
+
+    function showError(msg) {
+        showFlashMessage(msg || 'Failed to send message. Try again.', 'danger');
+    }
+
+    const tempId = 'temp-msg-' + Date.now();
+    const chat = document.getElementById('chatMessages');
+    const emptyChat = document.getElementById('emptyChat');
+    if (emptyChat) emptyChat.remove();
+
+    const tempMsg = document.createElement('div');
+    tempMsg.className = 'd-flex mb-3 justify-content-end optimistic-message';
+    tempMsg.id = tempId;
+    tempMsg.style.opacity = '0.7';
+    var timestamp = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    tempMsg.innerHTML = '<div class="bg-primary text-white rounded-4 px-3 py-2" style="max-width: 75%;">' +
+        '<p class="mb-0">' + escapeHtml(body) + '</p>' +
+        '<small class="text-white-50 d-block text-end mt-1" style="font-size: 0.7rem;">Sending...</small>' +
+        '</div>';
+    chat.appendChild(tempMsg);
+    chat.scrollTop = chat.scrollHeight;
+    input.value = '';
+
+    optimisticFetch('/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            recipient_username: recipientUsername,
+            body: body
+        })
+    }, function() {
+        const el = document.getElementById(tempId);
+        if (el) el.remove();
+        sendButton.disabled = false;
+        sendButton.innerHTML = originalHTML;
+        showError();
     })
-    .catch(function (error) {
-        console.error('Error submitting comment:', error);
-        // --- FAILURE: Remove the optimistic comment ---
-        const tempComment = document.getElementById(tempId);
-        if (tempComment) {
-            tempComment.remove();
+    .then(function(data) {
+        const el = document.getElementById(tempId);
+        if (el) {
+            el.style.opacity = '1';
+            el.innerHTML = '<div class="bg-primary text-white rounded-4 px-3 py-2" style="max-width: 75%;">' +
+                '<p class="mb-0">' + escapeHtml(data.body) + '</p>' +
+                '<small class="text-white-50 d-block text-end mt-1" style="font-size: 0.7rem;">' + data.timestamp + '</small>' +
+                '</div>';
+            el.removeAttribute('id');
         }
-        // Revert comment count
-        if (commentHeader) {
-            commentHeader.innerHTML = '<i class="bi bi-chat me-2"></i>Comments (' + originalCount + ')';
+        sendButton.disabled = false;
+        sendButton.innerHTML = originalHTML;
+        input.value = '';
+    })
+    .catch(function() {
+        sendButton.disabled = false;
+        sendButton.innerHTML = originalHTML;
+    });
+}
+
+// ============================================================
+// OPTIMISTIC UI: Toggle group join
+// ============================================================
+function toggleGroupJoin(button) {
+    const groupName = button.dataset.groupName;
+    const icon = button.querySelector('i');
+    let textSpan = button.querySelector('span');
+    if (!textSpan) textSpan = document.getElementById('joinText');
+    const card = button.closest('.card');
+    let countSpan = card ? card.querySelector('.member-count') : null;
+    if (!countSpan) countSpan = document.getElementById('memberCount');
+
+    if (!icon || !textSpan) return;
+
+    const wasJoined = button.classList.contains('btn-outline-secondary');
+    const originalText = textSpan.textContent;
+
+    function revert() {
+        if (wasJoined) {
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-secondary');
+            textSpan.textContent = 'Leave';
+            icon.className = 'bi bi-person-check me-1';
+        } else {
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-primary');
+            textSpan.textContent = 'Join';
+            icon.className = 'bi bi-person-plus me-1';
         }
-        showFlashMessage('Failed to post comment. Try again.', 'danger');
+        showFlashMessage('Failed to update group membership. Try again.', 'danger');
+    }
+
+    // Optimistic update
+    if (wasJoined) {
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-primary');
+        textSpan.textContent = 'Join';
+        icon.className = 'bi bi-person-plus me-1';
+    } else {
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-outline-secondary');
+        textSpan.textContent = 'Leave';
+        icon.className = 'bi bi-person-check me-1';
+    }
+
+    optimisticFetch('/groups/' + encodeURIComponent(groupName) + '/join', { method: 'POST' }, revert)
+    .then(function(data) {
+        if (data.joined) {
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-secondary');
+            textSpan.textContent = 'Leave';
+            icon.className = 'bi bi-person-check me-1';
+        } else {
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-primary');
+            textSpan.textContent = 'Join';
+            icon.className = 'bi bi-person-plus me-1';
+        }
+        if (countSpan) {
+            countSpan.textContent = data.member_count;
+        }
+    });
+}
+
+// ============================================================
+// OPTIMISTIC UI: Mark single notification as read
+// ============================================================
+function markNotificationRead(el, notificationId) {
+    if (!el) return;
+
+    const savedClass = el.className;
+    const markReadBtns = el.querySelectorAll('.mark-read-btn');
+    const originalBadgeText = document.getElementById('notificationBadge') ? document.getElementById('notificationBadge').textContent : '0';
+
+    function revert() {
+        el.className = savedClass;
+        markReadBtns.forEach(function(btn) { btn.style.display = ''; });
+        const badge = document.getElementById('notificationBadge');
+        if (badge) badge.textContent = originalBadgeText;
+        showFlashMessage('Failed to mark notification as read.', 'danger');
+    }
+
+    // Optimistic update
+    if (el.classList.contains('notification-unread')) {
+        el.classList.remove('notification-unread');
+    }
+    markReadBtns.forEach(function(btn) { btn.remove(); });
+
+    optimisticFetch('/notifications/' + notificationId + '/read', { method: 'POST' }, revert)
+    .then(function(data) {
+        if (data.success) {
+            updateNotificationCount();
+        }
+    });
+}
+
+// ============================================================
+// OPTIMISTIC UI: Mark all notifications as read
+// ============================================================
+function markAllNotificationsRead() {
+    const rows = document.querySelectorAll('.notification-unread');
+    const buttons = document.querySelectorAll('.mark-read-btn');
+    const markAllBtn = document.getElementById('markAllReadBtn');
+    const originalBadgeText = document.getElementById('notificationBadge') ? document.getElementById('notificationBadge').textContent : '0';
+
+    function revert() {
+        rows.forEach(function(row) { row.classList.add('notification-unread'); });
+        buttons.forEach(function(btn) { btn.style.display = ''; });
+        if (markAllBtn) markAllBtn.style.display = '';
+        const badge = document.getElementById('notificationBadge');
+        if (badge) badge.textContent = originalBadgeText;
+        showFlashMessage('Failed to mark all notifications as read.', 'danger');
+    }
+
+    // Optimistic update
+    rows.forEach(function(row) { row.classList.remove('notification-unread'); });
+    buttons.forEach(function(btn) { btn.remove(); });
+    if (markAllBtn) markAllBtn.remove();
+
+    optimisticFetch('/notifications/mark-all-read', { method: 'POST' }, revert)
+    .then(function(data) {
+        if (data.success) {
+            updateNotificationCount();
+        }
+    });
+}
+
+// ============================================================
+// Update the unread notification count badge
+// ============================================================
+function updateNotificationCount() {
+    optimisticFetch('/notifications/unread-count', { method: 'GET' })
+    .then(function(data) {
+        const badge = document.getElementById('notificationBadge');
+        if (badge) {
+            badge.textContent = data.count;
+            badge.style.display = data.count > 0 ? 'inline' : 'none';
+        }
     });
 }
 
@@ -273,7 +547,6 @@ function submitComment(form) {
 // Helper: Show a temporary flash message
 // ============================================================
 function showFlashMessage(message, category) {
-    // Remove any existing flash messages
     var existing = document.querySelector('.flash-message-toast');
     if (existing) existing.remove();
 
@@ -289,12 +562,11 @@ function showFlashMessage(message, category) {
         '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
     document.body.appendChild(toast);
 
-    // Auto-dismiss after 4 seconds
     setTimeout(function() {
         if (toast.parentNode) {
             toast.remove();
         }
-    }, 4000);
+    }, 3000);
 }
 
 // ============================================================
@@ -304,85 +576,6 @@ function escapeHtml(text) {
     var div = document.createElement('div');
     div.appendChild(document.createTextNode(text));
     return div.innerHTML;
-}
-
-// Toggle follow (AJAX)
-function toggleFollow(button) {
-    const username = button.dataset.username;
-    const icon = button.querySelector('i');
-    const textSpan = button.querySelector('span') || document.getElementById('followText');
-    const countSpan = document.getElementById('followerCount');
-
-    fetch('/user/' + username + '/follow', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function (response) { return response.json(); })
-    .then(function (data) {
-        if (data.error) {
-            console.error(data.error);
-            return;
-        }
-        if (data.following) {
-            if (icon) { icon.className = 'bi bi-person-check me-1'; }
-            if (textSpan) textSpan.textContent = 'Following';
-            button.className = 'btn btn-outline-secondary rounded-pill px-4';
-        } else {
-            if (icon) { icon.className = 'bi bi-person-plus me-1'; }
-            if (textSpan) textSpan.textContent = 'Follow';
-            button.className = 'btn btn-primary rounded-pill px-4';
-        }
-        if (countSpan) {
-            countSpan.textContent = data.follower_count;
-        }
-    })
-    .catch(function (error) {
-        console.error('Error toggling follow:', error);
-        showFlashMessage('Failed to update follow status. Try again.', 'danger');
-    });
-}
-
-// Toggle group join (AJAX)
-function toggleGroupJoin(button) {
-    const groupName = button.dataset.groupName;
-    const icon = button.querySelector('i');
-    // Try to find the text span within the button first, fall back to global #joinText
-    let textSpan = button.querySelector('span');
-    if (!textSpan) textSpan = document.getElementById('joinText');
-    // Try to find the member count in the same card, fall back to global #memberCount
-    const card = button.closest('.card');
-    let countSpan = card ? card.querySelector('.member-count') : null;
-    if (!countSpan) countSpan = document.getElementById('memberCount');
-
-    fetch('/groups/' + encodeURIComponent(groupName) + '/join', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function (response) { return response.json(); })
-    .then(function (data) {
-        if (data.joined) {
-            icon.className = 'bi bi-person-check me-1';
-            if (textSpan) textSpan.textContent = 'Leave';
-            button.className = 'btn btn-outline-secondary rounded-pill px-3 py-2 flex-shrink-0 ms-2';
-        } else {
-            icon.className = 'bi bi-person-plus me-1';
-            if (textSpan) textSpan.textContent = 'Join';
-            button.className = 'btn btn-primary rounded-pill px-3 py-2 flex-shrink-0 ms-2';
-        }
-        if (countSpan) {
-            countSpan.textContent = data.member_count;
-        }
-    })
-    .catch(function (error) {
-        console.error('Error toggling group join:', error);
-        showFlashMessage('Failed to update group membership. Try again.', 'danger');
-    });
 }
 
 // Share post (copy link to clipboard)
@@ -425,14 +618,13 @@ function showShareToast() {
 }
 
 // ============================================================
-// Convert UTC timestamps to Africa/Johannesburg time
+// Convert UTC timestamps to local time
 // ============================================================
 function convertLocalTimes() {
     const elements = document.querySelectorAll('.local-time');
     elements.forEach(function(el) {
         const utc = el.getAttribute('data-utc');
         if (!utc) return;
-        // Append 'Z' to treat the ISO string as UTC
         const date = new Date(utc + 'Z');
         if (isNaN(date.getTime())) return;
         let formatted;
@@ -456,122 +648,6 @@ function convertLocalTimes() {
 document.addEventListener('DOMContentLoaded', function () {
     convertLocalTimes();
 });
-
-// ============================================================
-// Mark a single notification as read (AJAX)
-// ============================================================
-function markNotificationRead(el, notificationId) {
-    fetch('/notifications/' + notificationId + '/read', {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        if (data.success) {
-            el.classList.remove('notification-unread');
-            const inline = el.querySelector('.mark-read-btn');
-            if (inline) inline.remove();
-            updateNotificationCount();
-        }
-    })
-    .catch(function(error) {
-        console.error('Error marking notification as read:', error);
-    });
-}
-
-// ============================================================
-// Update the unread notification count badge
-// ============================================================
-function updateNotificationCount() {
-    fetch('/notifications/unread-count', {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(function(response) { return response.json(); })
-    .then(function(data) {
-        const badge = document.getElementById('notificationBadge');
-        if (badge) {
-            if (data.count > 0) {
-                badge.textContent = data.count;
-                badge.style.display = 'inline';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-    })
-    .catch(function(error) {
-        console.error('Error updating notification count:', error);
-    });
-}
-
-// ============================================================
-// Notification sound polling (Web Audio API)
-// ============================================================
-function playNotificationSound() {
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-
-        function beep(freq, startTime, duration) {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.25, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-        }
-
-        const now = ctx.currentTime;
-        beep(880, now, 0.12);
-        beep(1047, now + 0.14, 0.12);
-    } catch (e) {
-        console.error('Error playing notification sound:', e);
-    }
-}
-
-function startNotificationPolling() {
-    let lastNotificationCount = null;
-    const isAuthenticated = document.querySelector('meta[name="current-username"]') !== null;
-
-    if (!isAuthenticated) return;
-
-    function poll() {
-        fetch('/notifications/unread-count', {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken
-            }
-        })
-        .then(function (response) { return response.json(); })
-        .then(function (data) {
-            const count = typeof data.count === 'number' ? data.count : 0;
-            if (lastNotificationCount === null) {
-                lastNotificationCount = count;
-                return;
-            }
-            if (count > lastNotificationCount) {
-                playNotificationSound();
-            }
-            lastNotificationCount = count;
-        })
-        .catch(function (error) {
-            console.error('Notification polling error:', error);
-        });
-    }
-
-    poll();
-    setInterval(poll, 10000);
-}
 
 // Delete post (AJAX) - owner only
 function deletePost(postId) {
@@ -601,7 +677,6 @@ function deletePost(postId) {
             return;
         }
         if (data.success) {
-            // Redirect to home page after successful deletion
             window.location.href = '/';
         }
     })
