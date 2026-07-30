@@ -1,5 +1,31 @@
 {% extends "base.html" %}
-{% block title %}{{ profile_user.username }} - farmersblog{% endblock %}
+{% block title %}{{ profile_user.username }} on farmersblog{% endblock %}
+{% block meta_description %}{{ profile_user.bio|striptags|truncate(155) if profile_user.bio else profile_user.username ~ ' is a farmer on farmersblog with ' ~ profile_user.post_count ~ ' posts and ' ~ profile_user.follower_count ~ ' followers.' }}{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block og_type %}profile{% endblock %}
+{% block og_title %}{{ profile_user.username }} on farmersblog{% endblock %}
+{% block og_description %}{{ self.meta_description() }}{% endblock %}
+{% block og_image %}{{ self.og_image() }}{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": {{ profile_user.username|tojson }},
+  "url": {{ url_for('profile.public_profile', username=profile_user.username, _external=True)|tojson }},
+  "description": {{ (profile_user.bio|striptags|truncate(200) if profile_user.bio else 'Farmer on farmersblog')|tojson }},
+  "image": {{ avatar_url(profile_user.avatar_filename) if profile_user.avatar_filename else ''|tojson }},
+  "interactionStatistic": [
+    {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/FollowAction",
+      "userInteractionCount": {{ profile_user.follower_count }}
+    }
+  ]
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 680px;">
@@ -15,7 +41,7 @@
                 <i class="bi bi-person-fill text-primary" style="font-size: 3rem;"></i>
             </div>
             {% endif %}
-            <h3 class="fw-bold mb-1">{{ profile_user.username }}</h3>
+            <h1 class="fw-bold mb-1">{{ profile_user.username }}</h1>
             {% if profile_user.location %}
             <p class="text-muted mb-1">
                 <i class="bi bi-geo-alt me-1"></i>{{ profile_user.location }}

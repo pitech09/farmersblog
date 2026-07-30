@@ -260,6 +260,14 @@ Or with a WSGI server like uWSGI.
 - Set strict security headers (auto-configured)
 - Use environment variables for all secrets
 
+## SEO Notes
+
+- The app includes dynamic SEO meta tags, Open Graph, Twitter Cards, and JSON-LD structured data.
+- Sitemap: `/sitemap.xml` (auto-generated)
+- Robots: `/robots.txt`
+- Private pages (`/login`, `/register`, `/admin`, `/settings`, etc.) are set to `noindex, nofollow`.
+- For production, set your canonical domain in the Render environment (e.g., `https://farmersblog.com`) and ensure non-www redirects to www or vice versa via Render's static redirects or Flask middleware.
+
 ## API Endpoints
 
 | Method | Route | Description | Auth |

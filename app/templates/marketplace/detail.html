@@ -1,13 +1,42 @@
 {% extends "base.html" %}
-{% block title %}{{ listing.title }} - farmersblog{% endblock %}
+{% block title %}{{ listing.title }} - farmersblog marketplace{% endblock %}
+{% block meta_description %}{{ listing.description|striptags|truncate(155) }}{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ listing.title }}{% endblock %}
+{% block og_description %}{{ self.meta_description() }}{% endblock %}
+{% block og_image %}{{ request.url_root|replace('http://', 'https://')|replace('https://', '')|trim('/') }}{{ media_url(listing.image_filename) }}{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": {{ listing.title|tojson }},
+  "description": {{ listing.description|striptags|truncate(5000)|tojson }},
+  "image": {{ media_url(listing.image_filename)|tojson }},
+  "offers": {
+    "@type": "Offer",
+    "price": {{ listing.price }},
+    "priceCurrency": "M",
+    "availability": "{% if listing.is_sold %}https://schema.org/OutOfStock{% else %}https://schema.org/InStock{% endif %}",
+    "seller": {
+      "@type": "Person",
+      "name": {{ listing.seller.username|tojson }}
+    }
+  },
+  "category": {{ listing.category|tojson }}
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 680px;">
     <div class="card shadow-sm rounded-4 border-0">
         <div class="position-relative" style="max-height: 500px; overflow: hidden; background: #f8f9fa;">
-            <img src="{{ media_url(listing.image_filename) }}"
-                 class="w-100" alt="{{ listing.title }}"
-                 style="max-height: 500px; object-fit: contain;">
+             <img src="{{ media_url(listing.image_filename) }}"
+                  class="w-100" alt="{{ listing.title }} – farmersblog marketplace"
+                  style="max-height: 500px; object-fit: contain;" loading="lazy">
             {% if listing.is_sold %}
             <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.4);">
                 <span class="badge bg-danger fs-4 px-4 py-2 rounded-pill">SOLD</span>

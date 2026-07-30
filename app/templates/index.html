@@ -1,18 +1,48 @@
 {% extends "base.html" %}
-{% block title %}farmersblog - Home{% endblock %}
+{% block title %}farmersblog – The Social Network for Farmers{% endblock %}
+{% block meta_description %}Connect with farmers, share agricultural insights, buy and sell in the marketplace, and join farming communities.{% endblock %}
+{% block robots %}index, follow{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "farmersblog",
+  "url": "{{ request.url_root }}",
+  "description": "The social network for farmers to connect, share, and trade.",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ request.url_root }}search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 680px;">
     {% if current_user.is_authenticated %}
     <!-- Feed Tabs -->
     <div class="d-flex gap-2 mb-4">
-        <a href="{{ url_for('main.index', feed='all') }}"
-           class="btn btn-sm rounded-pill px-4 {% if feed_type == 'all' or not feed_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-            <i class="bi bi-globe me-1"></i>All
+        <a href="{{ url_for('main.index', feed='for_you') }}"
+           class="btn btn-sm rounded-pill px-4 {% if feed_type == 'for_you' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-stars me-1"></i>For You
         </a>
         <a href="{{ url_for('main.index', feed='following') }}"
            class="btn btn-sm rounded-pill px-4 {% if feed_type == 'following' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
             <i class="bi bi-people me-1"></i>Following
+        </a>
+        <a href="{{ url_for('main.index', feed='all') }}"
+           class="btn btn-sm rounded-pill px-4 {% if feed_type == 'all' or not feed_type %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-globe me-1"></i>All Posts
+        </a>
+    </div>
+    {% else %}
+    <div class="d-flex gap-2 mb-4">
+        <a href="{{ url_for('main.index', feed='all') }}"
+           class="btn btn-sm rounded-pill px-4 btn-primary">
+            <i class="bi bi-globe me-1"></i>All Posts
         </a>
     </div>
     {% endif %}

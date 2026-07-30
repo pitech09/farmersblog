@@ -1,5 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Post by {{ post.author.username }} - farmersblog{% endblock %}
+{% block title %}{{ post.author.username }}: "{{ post.caption_preview|striptags|truncate(100) }}" – farmersblog{% endblock %}
+{% block meta_description %}{{ post.caption_preview|striptags|truncate(155) }}{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ post.author.username }}: "{{ post.caption_preview|striptags|truncate(100) }}"{% endblock %}
+{% block og_description %}{{ post.caption_preview|striptags|truncate(200) }}{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SocialMediaPosting",
+  "author": {
+    "@type": "Person",
+    "name": {{ post.author.username|tojson }},
+    "url": {{ url_for('profile.public_profile', username=post.author.username, _external=True)|tojson }}
+  },
+  "datePublished": {{ post.created_at.isoformat()|tojson }},
+  "text": {{ post.caption_preview|striptags|truncate(200)|tojson }},
+  "interactionStatistic": [
+    {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/LikeAction",
+      "userInteractionCount": {{ post.like_count }}
+    },
+    {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/CommentAction",
+      "userInteractionCount": {{ post.comment_count }}
+    }
+  ]
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 680px;">

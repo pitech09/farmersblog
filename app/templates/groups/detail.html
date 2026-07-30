@@ -1,5 +1,23 @@
 {% extends "base.html" %}
 {% block title %}{{ group.name }} - farmersblog{% endblock %}
+{% block meta_description %}{{ group.description|striptags|truncate(155) if group.description else 'Join ' ~ group.name ~ ' on farmersblog. ' ~ group.member_count ~ ' members, ' ~ group.post_count ~ ' posts.' }}{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block og_type %}group{% endblock %}
+{% block og_title %}{{ group.name }}{% endblock %}
+{% block og_description %}{{ self.meta_description() }}{% endblock %}
+{% block og_image %}{{ self.og_image() }}{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Group",
+  "name": {{ group.name|tojson }},
+  "description": {{ (group.description|striptags|truncate(5000) if group.description else '')|tojson }},
+  "memberCount": {{ group.member_count }}
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 680px;">
@@ -42,7 +60,7 @@
                     {% if member.avatar_filename %}
                     <img src="{{ avatar_url(member.avatar_filename) }}"
                          class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;"
-                         data-bs-toggle="tooltip" title="{{ member.username }}" alt="{{ member.username }}">
+                         data-bs-toggle="tooltip" title="{{ member.username }}" alt="{{ member.username }}'s avatar">
                     {% else %}
                     <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center"
                          style="width: 32px; height: 32px;" data-bs-toggle="tooltip" title="{{ member.username }}">

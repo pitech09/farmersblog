@@ -90,6 +90,13 @@ def create():
         db.session.add(post)
         db.session.flush()
 
+        for follower in post.author.followers:
+            try:
+                from app.blueprints.main import invalidate_for_you_cache
+                invalidate_for_you_cache(follower.id)
+            except Exception:
+                pass
+
         for idx, file in enumerate(files):
             if file.filename == '':
                 continue
@@ -152,6 +159,11 @@ def create():
 
         db.session.commit()
         flash('Post created successfully!', 'success')
+        try:
+            from app.blueprints.main import invalidate_for_you_cache
+            invalidate_for_you_cache(post.author_id)
+        except Exception:
+            pass
         if group_id:
             group = Group.query.get(group_id)
             return redirect(url_for('groups.detail', group_name=group.name))
@@ -169,10 +181,22 @@ def like(post_id):
         post.likes.remove(current_user)
         db.session.commit()
         liked = False
+        try:
+            from app.blueprints.main import invalidate_for_you_cache
+            invalidate_for_you_cache(post.author_id)
+            invalidate_for_you_cache(current_user.id)
+        except Exception:
+            pass
     else:
         post.likes.append(current_user)
         db.session.commit()
         liked = True
+        try:
+            from app.blueprints.main import invalidate_for_you_cache
+            invalidate_for_you_cache(post.author_id)
+            invalidate_for_you_cache(current_user.id)
+        except Exception:
+            pass
         # Notify the post owner if not the liker
         if post.author_id != current_user.id:
             notification = Notification(
@@ -211,6 +235,12 @@ def comment(post_id):
     )
     db.session.add(comment)
     db.session.commit()
+    try:
+        from app.blueprints.main import invalidate_for_you_cache
+        invalidate_for_you_cache(post.author_id)
+        invalidate_for_you_cache(current_user.id)
+    except Exception:
+        pass
 
     # Notify the post owner if not the commenter
     if post.author_id != current_user.id:
@@ -223,7 +253,6 @@ def comment(post_id):
         )
         db.session.add(notification)
         db.session.commit()
-
     return jsonify({
         'id': comment.id,
         'text': comment.text,
