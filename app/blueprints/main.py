@@ -182,7 +182,7 @@ def sitemap_xml():
 
     urls = [base_url]
 
-    users = User.query.all()
+    users = User.query.filter_by(is_admin=False).all()
     for user in users:
         urls.append(f"{base_url}/user/{user.username}")
 

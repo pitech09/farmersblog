@@ -7,6 +7,10 @@ __pycache__/
 *.pyo
 *.egg-info/
 instance/
+create_admin.py
+security_harden.py
+SECURITY_HARDENING.md
+seed.py
 farmersblog.egg-info/
 
 # Uploads (local dev storage, not for git)

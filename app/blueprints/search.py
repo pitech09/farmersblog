@@ -47,6 +47,7 @@ def search_users():
     if query:
         pagination = User.query.filter(
             User.id != (current_user.id if current_user.is_authenticated else 0),
+            User.is_admin == False,
             (
                 User.username.ilike(f'%{query}%') |
                 User.location.ilike(f'%{query}%')
@@ -58,12 +59,15 @@ def search_users():
         # Show all users except current, ordered by newest first
         if current_user.is_authenticated:
             pagination = User.query.filter(
-                User.id != current_user.id
+                User.id != current_user.id,
+                User.is_admin == False
             ).order_by(User.created_at.desc()).paginate(
                 page=page, per_page=per_page, error_out=False
             )
         else:
-            pagination = User.query.order_by(
+            pagination = User.query.filter(
+                User.is_admin == False
+            ).order_by(
                 User.created_at.desc()
             ).paginate(
                 page=page, per_page=per_page, error_out=False
