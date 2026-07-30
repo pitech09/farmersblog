@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from flask_login import current_user
+from flask_login import login_required, current_user
 from app.models import Post, User
 from app.extensions import db
 
@@ -38,6 +38,7 @@ def search_posts():
 
 
 @search_bp.route('/users')
+@login_required
 def search_users():
     """Search for users by username or location (login required redirect handled optionally)."""
     query = request.args.get('q', '').strip()

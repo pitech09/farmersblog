@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+import traceback
+from flask import Flask, render_template
 from app.config import get_config
 from app.extensions import db, login_manager, limiter, csrf, cache
 from flask_migrate import Migrate
@@ -129,6 +130,20 @@ def create_app(config_class=None):
             if value:
                 response.headers[header] = value
         return response
+
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found_error(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(403)
+    def forbidden_error(e):
+        return render_template('errors/403.html'), 403
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        app.logger.error(f'Internal error: {e}\n{traceback.format_exc()}')
+        return render_template('errors/500.html'), 500
 
     # Create tables (safe to call repeatedly - uses IF NOT EXISTS internally)
     with app.app_context():
